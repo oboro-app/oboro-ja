@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# pre-push: 品質ゲート全体(check-all.sh が test を含むため、単独で十分)
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+./scripts/check-all.sh

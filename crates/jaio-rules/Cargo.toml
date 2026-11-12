@@ -1,0 +1,24 @@
+[package]
+name = "jaio-rules"
+description = "ルール trait とルール実装群"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = "1"
+comrak = "0.55"
+ignore = "0.4"
+jaio-core = { path = "../jaio-core" }
+jaio-index = { path = "../jaio-index" }
+jaio-parse = { path = "../jaio-parse", default-features = false }
+percent-encoding = "2"
+rayon = "1.12.0"
+
+[features]
+default = ["embedded-dict"]
+embedded-dict = ["jaio-parse/embedded-dict"]

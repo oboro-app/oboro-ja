@@ -1,0 +1,19 @@
+[package]
+name = "jaio-core"
+description = "jaio の診断モデル・設定(依存最小の核心 crate)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = "1"
+ignore = "0.4"
+serde = { version = "1", features = ["derive"] }
+toml = "0.9"
+
+[dev-dependencies]
+serde_json = "1"

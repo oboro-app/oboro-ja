@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# pre-commit: 速いチェック。Rust 関連のステージがない場合は cargo 系チェックを省略する。
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+# CI 禁止ガード(常に実行。高速)
+if [ -d .github/workflows ]; then
+  echo "error: .github/workflows が存在する。CI 不使用運用のため削除すること。" >&2
+  exit 1
+fi
+
+# ステージされたファイルに Rust 関連がなければ cargo チェックは省略(ドキュメントのみのコミットを速くする)
+if git diff --cached --name-only | grep -qE '\.rs$|(^|/)Cargo\.(toml|lock)$|(^|/)rust-toolchain[^/]*$'; then
+  cargo fmt --all --check
+  cargo clippy --workspace --all-targets -- -D warnings
+else
+  echo "pre-commit: Rust 関連のステージなしのため cargo チェックを省略"
+fi

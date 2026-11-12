@@ -1,0 +1,4 @@
+# rustfmt 設定。
+# import の並び順(型名を先に、関数を後に)は edition 2024 のスタイルに統一する。
+# エディタや他ツールの import 整理機能と cargo fmt の規則が揺れるのを防ぐため明示する。
+style_edition = "2024"

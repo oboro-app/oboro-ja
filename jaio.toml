@@ -1,0 +1,37 @@
+# jaio の解析設定。スキーマは docs/design.md §8 を参照。
+# テスト用 fixture は解析対象から除外する
+[paths]
+exclude = [
+  "crates/jaio-rules/tests/fixtures",
+  # ログ置き場(解析対象外)
+  "logs",
+]
+# 隠しエントリ(.agents 等)を対象に含める。.git は常に除外
+include_hidden = true
+
+# ハーネス指示文書(AGENTS.md・.agents/・.opencode/)はである体。文書は敬体
+# (設計書 §1.3)。ドッグフーディング常設化(#71)
+[style]
+target = "plain"
+
+[style.overrides]
+"README.md" = "polite"
+"docs/**" = "polite"
+
+[detection]
+# ハーネス(Claude Code / OpenCode 等)が名前規約で発見するファイルは
+# 文書間リンクされないため orphan の対象外にする
+orphan_entry_points = [
+  "README.md",
+  "AGENTS.md",
+  "SKILL.md",
+  ".opencode/commands/**",
+]
+
+[lint.rule_excludes]
+# handover スキルは「生成時に埋めるテンプレート見出し」を持つ。未生成の
+# 見出し枠が空なのは仕様のため、このパスでは empty-section を報告しない(#75)。
+# .opencode/commands 側は薄いラッパのため見出しを持たない(除外不要)
+"structure/empty-section" = [
+  ".agents/skills/handover/SKILL.md",
+]

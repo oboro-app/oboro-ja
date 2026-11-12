@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+# ワークスペース共通設定。全crateはここを継承する。
+[workspace.package]
+version = "0.9.4"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+# 備考: restriction 系 lint(unwrap_used 等)は -D warnings との組み合わせで
+# テストコードまで硬直化させるため workspace 既定には入れない。
+# 必要になったら crate 個別・テスト除外(cfg_attr)で段階導入する。
+
+[profile.release]
+lto = "thin"
+# lindera 辞書埋め込みでバイナリが肥大化するためシンボルを除去する
+strip = true

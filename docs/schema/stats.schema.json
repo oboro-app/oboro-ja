@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/stats.schema.json",
+  "title": "jaio stats report",
+  "description": "jaio stats --format json の出力(設計書 §7.2、#50/#53)。層別集計の自動化向けに frontmatter(常時層)と本文(発火層)の分離計測を含む。version が同じ間は既存フィールドの削除・型変更を行わない(追加のみ)。",
+  "type": "object",
+  "required": ["kind", "version", "tool", "context", "files", "total", "similarity"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "jaio/stats",
+      "description": "出力の種別識別"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "出力構造のバージョン"
+    },
+    "tool": { "$ref": "#/$defs/tool" },
+    "context": {
+      "type": "object",
+      "description": "実行コンテキスト。check と同じ再現性識別(§7.2)",
+      "required": ["roots", "config_fingerprint", "sources", "algorithms", "targets", "operational_errors"],
+      "properties": {
+        "roots": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "config_fingerprint": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source" }
+        },
+        "algorithms": {
+          "type": "object",
+          "description": "stats が実際に使う前処理・算法のみ(形態素解析を使わないため morphology は出さない)。--similarity 併用時のみ similarity を含む",
+          "required": ["tokenizer", "build"],
+          "properties": {
+            "tokenizer": { "type": "string" },
+            "similarity": { "type": "string" },
+            "build": { "type": "string" }
+          }
+        },
+        "targets": { "$ref": "#/$defs/targets" },
+        "operational_errors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/operational_error" }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "description": "ファイル別の計測(表示パス昇順)",
+      "items": {
+        "type": "object",
+        "required": ["file", "chars", "tokens", "tok_per_100ch", "frontmatter", "body"],
+        "properties": {
+          "file": { "type": "string" },
+          "chars": { "type": "integer", "minimum": 0 },
+          "tokens": { "type": "integer", "minimum": 0 },
+          "tok_per_100ch": { "type": "number", "minimum": 0 },
+          "frontmatter": {
+            "description": "frontmatter(常時コンテキストに載る層)の計測。無いファイルは null(#53)",
+            "oneOf": [
+              { "type": "null" },
+              { "$ref": "#/$defs/char_token_count" }
+            ]
+          },
+          "body": { "$ref": "#/$defs/char_token_count" }
+        }
+      }
+    },
+    "total": {
+      "type": "object",
+      "required": ["files", "chars", "tokens"],
+      "properties": {
+        "files": { "type": "integer", "minimum": 0 },
+        "chars": { "type": "integer", "minimum": 0 },
+        "tokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "similarity": {
+      "description": "--similarity 併用時の類似度分布。未指定時は null",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["pairs", "docs", "min_chars", "histogram", "top_pairs"],
+          "properties": {
+            "pairs": { "type": "integer", "minimum": 0 },
+            "docs": { "type": "integer", "minimum": 0 },
+            "min_chars": { "type": "integer", "minimum": 0 },
+            "histogram": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["lower", "count"],
+                "properties": {
+                  "lower": { "type": "number" },
+                  "count": { "type": "integer", "minimum": 0 }
+                }
+              }
+            },
+            "top_pairs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["similarity", "a", "b"],
+                "properties": {
+                  "similarity": { "type": "number" },
+                  "a": { "type": "string" },
+                  "b": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "const": "jaio" },
+        "version": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string" }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "required": ["discovered", "analyzed", "skipped", "discovery_complete"],
+      "properties": {
+        "discovered": { "type": "integer", "minimum": 0 },
+        "analyzed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "discovery_complete": { "type": "boolean" }
+      }
+    },
+    "operational_error": {
+      "type": "object",
+      "required": ["stage", "reason"],
+      "properties": {
+        "path": { "type": "string" },
+        "stage": { "type": "string" },
+        "reason": { "type": "string" }
+      }
+    },
+    "char_token_count": {
+      "type": "object",
+      "required": ["chars", "tokens"],
+      "properties": {
+        "chars": { "type": "integer", "minimum": 0 },
+        "tokens": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

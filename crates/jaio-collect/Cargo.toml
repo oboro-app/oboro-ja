@@ -1,0 +1,21 @@
+[package]
+name = "jaio-collect"
+description = "ソースコードからのコメント抽出(tree-sitter、設計書 §6.3)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = "1"
+jaio-core = { path = "../jaio-core" }
+tree-sitter = "0.25"
+tree-sitter-bash = "0.25"
+tree-sitter-go = "0.25"
+tree-sitter-python = "0.25"
+tree-sitter-rust = "0.24"
+tree-sitter-swift = "0.7"
+tree-sitter-typescript = "0.23"

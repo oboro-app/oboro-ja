@@ -1,0 +1,17 @@
+# ビルド成果物
+/target
+# テストが一時データを置くことがあるサブディレクトリ(ルートの /target と同義)
+crates/*/target/
+
+# Python ツールの成果物
+__pycache__/
+*.pyc
+
+# ログはリポジトリTOPの logs/ に置く(配置物自体は管理しない)。
+# 実運用試用の成果物 (他のリポジトリの内容を含む) は公開しないため管理しない
+/logs/*
+!/logs/.gitkeep
+/scripts/field-baselines/
+
+# OS
+.DS_Store

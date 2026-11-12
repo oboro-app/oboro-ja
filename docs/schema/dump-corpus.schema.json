@@ -1,0 +1,386 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/dump-corpus.schema.json",
+  "title": "jaio dump corpus",
+  "description": "jaio dump corpus の出力(設計書 §7.2、Issue #16/#39)。Corpus の統計(文書別 tokens/body_chars/sections・重複ペア・コメント入力)と check と同じ context を持つ。被リンク数・参照元一覧は含まない(被リンクは relation/orphan・merge/consolidation-plan の診断 measurements にのみ出る)。context の構造は report.schema.json の context と同じ(#39)。version は jaio_report::SCHEMA_VERSION と連動する。フィールドの削除・型変更は version 更新の前提でのみ行う。",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "analysis_complete",
+    "context",
+    "docs",
+    "duplicates",
+    "comments"
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "jaio/dump-corpus",
+      "description": "出力の種別識別"
+    },
+    "version": {
+      "type": "integer",
+      "const": 2,
+      "description": "report.schema.json の schema_version と連動"
+    },
+    "analysis_complete": {
+      "type": "boolean",
+      "description": "運用上の失敗(読み込み失敗等)なく解析が完了したか"
+    },
+    "context": {
+      "type": "object",
+      "description": "実行コンテキスト(§7.3)。同一入力・設定で出力が再現できることを追跡可能にし、解析の完全性・運用上の失敗・ルール実行状態・近似検索の有無を記録する(#36)",
+      "required": [
+        "roots",
+        "config_fingerprint",
+        "sources",
+        "algorithms",
+        "targets",
+        "operational_errors",
+        "rules",
+        "candidate_search"
+      ],
+      "properties": {
+        "roots": {
+          "type": "array",
+          "description": "解析対象のルート(コマンドラインで指定した表示パス)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config_fingerprint": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "実効設定の正規化ハッシュ"
+        },
+        "sources": {
+          "type": "array",
+          "description": "解析した入力ソースの content hash 列(パス昇順)",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        },
+        "algorithms": {
+          "type": "object",
+          "description": "前処理・算法の識別情報",
+          "required": [
+            "morphology",
+            "tokenizer",
+            "similarity",
+            "build"
+          ],
+          "properties": {
+            "morphology": {
+              "type": "string",
+              "description": "形態素解析器・分割モード・辞書実体の識別(例: lindera-sudachidict(mode=normal, dict=embedded:sudachidict@6.0.0)。埋め込み辞書の @<version> は lindera-sudachidict crate 版。外部辞書は external:<spec>:manifest-sha256:<hash>、識別不能時は unidentified)"
+            },
+            "tokenizer": {
+              "type": "string",
+              "description": "トークン計測エンコーディング(例: tiktoken o200k_base)"
+            },
+            "similarity": {
+              "type": "string",
+              "description": "類似度計算の算法識別子(例: simhash64+bigram-jaccard)"
+            },
+            "build": {
+              "type": "string",
+              "description": "バイナリと依存群のビルド識別(jaio 版 + Cargo.lock の SHA-256。辞書データ・算法・トークナイザーの版追跡用共通 manifest)"
+            }
+          }
+        },
+        "targets": {
+          "$ref": "#/$defs/targets"
+        },
+        "operational_errors": {
+          "type": "array",
+          "description": "解析を止めなかった運用上の失敗(走査・読み込み・コメント抽出・ルール実行)",
+          "items": {
+            "$ref": "#/$defs/operational_error"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "description": "全ルールの実行状態",
+          "items": {
+            "$ref": "#/$defs/rule_status"
+          }
+        },
+        "candidate_search": {
+          "$ref": "#/$defs/candidate_search"
+        }
+      }
+    },
+    "docs": {
+      "type": "array",
+      "description": "文書別の統計。被リンク数・参照元一覧は含まない(被リンクは relation/orphan・merge/consolidation-plan の診断 measurements にのみ出る。各文書のリンク先は dump doc の links で確認できる)",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "tokens",
+          "body_chars",
+          "sections"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "文書の表示パス"
+          },
+          "tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "本文のトークン数(context.algorithms.tokenizer のエンコーディング)"
+          },
+          "body_chars": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "正規化後の本文文字数(見出し・コードブロック等を除く本文リーフの連結)"
+          },
+          "sections": {
+            "type": "array",
+            "description": "正規化後本文が detection.section_body_min_chars 以上のセクションのみ(見出しの全列挙ではない)。本文そのものは含まない",
+            "items": {
+              "type": "object",
+              "required": [
+                "line",
+                "title"
+              ],
+              "properties": {
+                "line": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "見出し行(1 基点)"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "見出しテキスト"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "duplicates": {
+      "type": "array",
+      "description": "重複ペア(候補列挙・採点の条件は context.candidate_search)",
+      "items": {
+        "type": "object",
+        "required": [
+          "a",
+          "b",
+          "score",
+          "intersection",
+          "union"
+        ],
+        "properties": {
+          "a": {
+            "type": "string",
+            "description": "片側の文書(表示パス)。ペアは無順序で a/b の順に意味はない(文書インデックス昇順)"
+          },
+          "b": {
+            "type": "string",
+            "description": "もう片側の文書(表示パス)"
+          },
+          "score": {
+            "type": "number",
+            "description": "bigram Jaccard 類似度(= intersection / union)。context.candidate_search.cutoff 以上のペアのみ出る"
+          },
+          "intersection": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "類似度の分子(共通 bigram 数)"
+          },
+          "union": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "類似度の分母(bigram 和集合の要素数)"
+          }
+        }
+      }
+    },
+    "comments": {
+      "type": "array",
+      "description": "コメント抽出元のソースファイル(relation/doc-comment-drift 抑制時は空)",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "body_chars"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "ソースファイルの表示パス"
+          },
+          "body_chars": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "抽出したコメント本文の文字数"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "入力ソースの表示パス"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "内容の SHA-256(hex)"
+        }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "description": "対象ファイルの発見・解析・スキップ件数(#36)",
+      "required": [
+        "discovered",
+        "analyzed",
+        "skipped",
+        "discovery_complete"
+      ],
+      "properties": {
+        "discovered": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "走査で発見した対象ファイル数"
+        },
+        "analyzed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "実際に解析したファイル数"
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "読み込み失敗等でスキップしたファイル数"
+        },
+        "discovery_complete": {
+          "type": "boolean",
+          "description": "走査が失敗なく完了したか。false のとき discovered は下限(未発見数は不明)"
+        }
+      }
+    },
+    "operational_error": {
+      "type": "object",
+      "description": "致命的でない実行上の失敗 1 件(#36)",
+      "required": [
+        "stage",
+        "reason"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "失敗したファイル・ディレクトリ(特定できない場合は出力しない)"
+        },
+        "stage": {
+          "type": "string",
+          "description": "失敗した段階(scan / read / metadata / comment_scan / comment_read / comment_extract / rule:<id>)"
+        },
+        "reason": {
+          "type": "string",
+          "description": "失敗の理由"
+        }
+      }
+    },
+    "rule_status": {
+      "type": "object",
+      "description": "ルール 1 件の実行状態(#36)",
+      "required": [
+        "rule_id",
+        "status"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "executed",
+            "disabled",
+            "insufficient_inputs",
+            "failed"
+          ],
+          "description": "executed: 実行完了 / disabled: lint 設定で抑制 / insufficient_inputs: 入力不足 / failed: 少なくとも 1 入力で失敗"
+        },
+        "reason": {
+          "type": "string",
+          "description": "状態の理由(disabled / insufficient_inputs / failed のとき)"
+        },
+        "targets": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "ルールが適用対象として見た単位の総数(リーフ・文・ペア等、ルール固有)。実行していない場合は出力しない"
+        },
+        "measured": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "実際に計測・判定できた単位数。targets > measured なら一部のみ判定"
+        },
+        "suppressed_by_path": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "lint.rule_excludes のパス照合で抑制された診断数(#82)。dump corpus はルールを実行しないため現状は出力されないが、context の構造は report と同じ契約のため定義を揃える"
+        }
+      }
+    },
+    "candidate_search": {
+      "type": "object",
+      "description": "文書重複の候補列挙方式と件数(#36)",
+      "required": [
+        "method",
+        "all_pairs",
+        "comparable_docs",
+        "candidates",
+        "scored_pairs",
+        "cutoff"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "all_pairs",
+            "simhash_banding"
+          ],
+          "description": "候補列挙の方式。simhash_banding は近似検索で未検出ペアがあり得る"
+        },
+        "all_pairs": {
+          "type": "boolean",
+          "description": "全ペアを採点したか(detection.all_pairs 指定時 true)"
+        },
+        "comparable_docs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "比較対象となった文書数(本文長フィルタ適用後)"
+        },
+        "candidates": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "列挙された候補ペア数"
+        },
+        "scored_pairs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "実際に類似度を採点したペア数"
+        },
+        "cutoff": {
+          "type": "number",
+          "description": "採点に使った類似度の下限(detection.doc_similarity と merge.min_similarity の低い方)"
+        }
+      }
+    }
+  }
+}

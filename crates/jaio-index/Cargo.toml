@@ -1,0 +1,12 @@
+[package]
+name = "jaio-index"
+description = "リポジトリ横断索引のアルゴリズム(SimHash・n-gram 類似度・テキスト正規化)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]

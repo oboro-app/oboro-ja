@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/dump-doc.schema.json",
+  "title": "jaio dump doc",
+  "description": "jaio dump doc の出力(設計書 §7.2、Issue #16)。文書構造 AST(leaf・heading・links・frontmatter 領域)のダンプ。version は jaio_report::SCHEMA_VERSION と連動する。フィールドの削除・型変更は version 更新の前提でのみ行う。",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "file",
+    "frontmatter",
+    "headings",
+    "leaves",
+    "links"
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "jaio/dump-doc",
+      "description": "出力の種別識別"
+    },
+    "version": {
+      "type": "integer",
+      "const": 2,
+      "description": "report.schema.json の schema_version と連動"
+    },
+    "file": {
+      "type": "string",
+      "description": "ダンプ対象ファイルの表示パス"
+    },
+    "frontmatter": {
+      "description": "frontmatter の領域計測。無い場合は null(#53/#57)",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "chars",
+            "tokens"
+          ],
+          "properties": {
+            "chars": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tokens": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "headings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "level",
+          "line",
+          "title",
+          "empty"
+        ],
+        "properties": {
+          "level": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "empty": {
+            "type": "boolean",
+            "description": "直後に本文ブロックが続かない(空セクション)か"
+          }
+        }
+      }
+    },
+    "leaves": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "line",
+          "kind",
+          "nest_depth",
+          "text"
+        ],
+        "properties": {
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "heading",
+              "paragraph",
+              "list_item",
+              "table_cell"
+            ]
+          },
+          "nest_depth": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "リスト・引用のネスト深さ(最上位が 1、非ネストは 0)"
+          },
+          "text": {
+            "type": "string",
+            "description": "平文化テキスト(ソフトブレイクは空白化、コードは除外)"
+          }
+        }
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "url",
+          "line",
+          "kind"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "リンク先 URL(表記のまま)"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "link",
+              "image"
+            ],
+            "description": "リンク種別(#74)。link は [text](url)、image は ![alt](url)。画像は broken-link の実在検証のみに使う"
+          }
+        }
+      }
+    }
+  }
+}

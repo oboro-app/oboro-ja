@@ -1,0 +1,631 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/report.schema.json",
+  "title": "jaio check report",
+  "description": "jaio check --format json の出力。LLM 委譲ワークフロー向けの第一級出力(設計書 §7.3)。schema_version が同じ間は既存フィールドの削除・型変更を行わない(追加のみ)。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tool",
+    "context",
+    "summary",
+    "diagnostics"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2,
+      "description": "出力構造のバージョン。互換性のない変更で増やす"
+    },
+    "tool": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "jaio"
+        },
+        "version": {
+          "type": "string",
+          "description": "jaio のバージョン(Cargo.toml)"
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "実行コンテキスト(§7.3)。同一入力・設定で出力が再現できることを追跡可能にし、解析の完全性・運用上の失敗・ルール実行状態・近似検索の有無を記録する(#36)",
+      "required": [
+        "roots",
+        "config_fingerprint",
+        "sources",
+        "algorithms",
+        "targets",
+        "operational_errors",
+        "rules",
+        "candidate_search"
+      ],
+      "properties": {
+        "roots": {
+          "type": "array",
+          "description": "解析対象のルート(コマンドラインで指定した表示パス)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "config_fingerprint": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "実効設定の正規化ハッシュ"
+        },
+        "sources": {
+          "type": "array",
+          "description": "解析した入力ソースの content hash 列(パス昇順)",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        },
+        "algorithms": {
+          "type": "object",
+          "description": "前処理・算法の識別情報",
+          "required": [
+            "morphology",
+            "tokenizer",
+            "similarity",
+            "build"
+          ],
+          "properties": {
+            "morphology": {
+              "type": "string",
+              "description": "形態素解析器・分割モード・辞書実体の識別(例: lindera-sudachidict(mode=normal, dict=embedded:sudachidict@6.0.0)。埋め込み辞書の @<version> は lindera-sudachidict crate 版。外部辞書は external:<spec>:manifest-sha256:<hash>、識別不能時は unidentified)"
+            },
+            "tokenizer": {
+              "type": "string",
+              "description": "トークン計測エンコーディング(例: tiktoken o200k_base)"
+            },
+            "similarity": {
+              "type": "string",
+              "description": "類似度計算の算法識別子(例: simhash64+bigram-jaccard)"
+            },
+            "build": {
+              "type": "string",
+              "description": "バイナリと依存群のビルド識別(jaio 版 + Cargo.lock の SHA-256。辞書データ・算法・トークナイザーの版追跡用共通 manifest)"
+            }
+          }
+        },
+        "targets": {
+          "$ref": "#/$defs/targets"
+        },
+        "operational_errors": {
+          "type": "array",
+          "description": "解析を止めなかった運用上の失敗(走査・読み込み・コメント抽出・ルール実行)",
+          "items": {
+            "$ref": "#/$defs/operational_error"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "description": "全ルールの実行状態",
+          "items": {
+            "$ref": "#/$defs/rule_status"
+          }
+        },
+        "candidate_search": {
+          "$ref": "#/$defs/candidate_search"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "files",
+        "tokens",
+        "errors",
+        "warnings",
+        "infos",
+        "analysis_complete",
+        "hints",
+        "top_rules"
+      ],
+      "properties": {
+        "files": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "解析した Markdown 文書数"
+        },
+        "tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "対象全体のトークン総数(analysis.encoding で計測)"
+        },
+        "errors": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warnings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "infos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "analysis_complete": {
+          "type": "boolean",
+          "description": "走査・読み込み・ルール実行が全て完了したか(#36)。false のとき終了コードは 2"
+        },
+        "hints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "設定による緩和が見込める大量検出への案内(#91)。該当なしのときは空配列。診断ではなく実行側の助言のため重大度を持たない"
+        },
+        "top_rules": {
+          "type": "array",
+          "description": "ルール別診断数の上位(件数降順、同数は rule_id 辞書順)。[rule_id, count] の組",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer",
+                "minimum": 0
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "timings": {
+          "type": "object",
+          "description": "フェーズ別の処理時間(ミリ秒)。--verbose 指定時のみ出力",
+          "required": [
+            "collect_ms",
+            "parse_ms",
+            "corpus_ms"
+          ],
+          "properties": {
+            "collect_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "ファイル収集"
+            },
+            "parse_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "パースと Document ルール実行"
+            },
+            "corpus_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Corpus 構築と Corpus ルール実行"
+            }
+          }
+        },
+        "slow_rules": {
+          "type": "array",
+          "description": "所要時間降順の上位ルール。[rule_id, ms, count] の組。--verbose 指定時のみ出力",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "integer",
+                "minimum": 0
+              }
+            ],
+            "minItems": 3,
+            "maxItems": 3
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "description": "診断列。file → line → col → rule_id → observation の順で決定的に並ぶ",
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    }
+  },
+  "$defs": {
+    "span": {
+      "type": "object",
+      "required": [
+        "line",
+        "col"
+      ],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "行番号(1 基点)"
+        },
+        "col": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "桁番号(1 基点、文字単位)。パターン系ルールはソース実位置、形態素系・構造系ルールは行頭(1)"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "入力ソースの表示パス"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "内容の SHA-256(hex)"
+        }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "description": "対象ファイルの発見・解析・スキップ件数(#36)",
+      "required": [
+        "discovered",
+        "analyzed",
+        "skipped",
+        "discovery_complete"
+      ],
+      "properties": {
+        "discovered": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "走査で発見した対象ファイル数"
+        },
+        "analyzed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "実際に解析したファイル数"
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "読み込み失敗等でスキップしたファイル数"
+        },
+        "discovery_complete": {
+          "type": "boolean",
+          "description": "走査が失敗なく完了したか。false のとき discovered は下限(未発見数は不明)"
+        }
+      }
+    },
+    "operational_error": {
+      "type": "object",
+      "description": "致命的でない実行上の失敗 1 件(#36)",
+      "required": [
+        "stage",
+        "reason"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "失敗したファイル・ディレクトリ(特定できない場合は出力しない)"
+        },
+        "stage": {
+          "type": "string",
+          "description": "失敗した段階(scan / read / metadata / comment_scan / comment_read / comment_extract / rule:<id>)"
+        },
+        "reason": {
+          "type": "string",
+          "description": "失敗の理由"
+        }
+      }
+    },
+    "rule_status": {
+      "type": "object",
+      "description": "ルール 1 件の実行状態(#36)",
+      "required": [
+        "rule_id",
+        "status"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "executed",
+            "disabled",
+            "insufficient_inputs",
+            "failed"
+          ],
+          "description": "executed: 実行完了 / disabled: lint 設定で抑制 / insufficient_inputs: 入力不足 / failed: 少なくとも 1 入力で失敗"
+        },
+        "reason": {
+          "type": "string",
+          "description": "状態の理由(disabled / insufficient_inputs / failed のとき)"
+        },
+        "targets": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "ルールが適用対象として見た単位の総数(リーフ・文・ペア等、ルール固有)。実行していない場合は出力しない"
+        },
+        "measured": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "実際に計測・判定できた単位数。targets > measured なら一部のみ判定"
+        },
+        "suppressed_by_path": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "lint.rule_excludes のパス照合で抑制された診断数(#82)。抑制がなければ出力しない"
+        }
+      }
+    },
+    "candidate_search": {
+      "type": "object",
+      "description": "文書重複の候補列挙方式と件数(#36)",
+      "required": [
+        "method",
+        "all_pairs",
+        "comparable_docs",
+        "candidates",
+        "scored_pairs",
+        "cutoff"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "all_pairs",
+            "simhash_banding"
+          ],
+          "description": "候補列挙の方式。simhash_banding は近似検索で未検出ペアがあり得る"
+        },
+        "all_pairs": {
+          "type": "boolean",
+          "description": "全ペアを採点したか(detection.all_pairs 指定時 true)"
+        },
+        "comparable_docs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "比較対象となった文書数(本文長フィルタ適用後)"
+        },
+        "candidates": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "列挙された候補ペア数"
+        },
+        "scored_pairs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "実際に類似度を採点したペア数"
+        },
+        "cutoff": {
+          "type": "number",
+          "description": "採点に使った類似度の下限(detection.doc_similarity と merge.min_similarity の低い方)"
+        }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "description": "計測値 1 件(§7.3)。status = measured なら有限の value が必須、それ以外は value を出さず空でない reason が必須",
+      "required": [
+        "metric",
+        "status"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "measured"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "value"
+            ]
+          },
+          "else": {
+            "required": [
+              "reason"
+            ],
+            "not": {
+              "required": [
+                "value"
+              ]
+            }
+          }
+        }
+      ],
+      "properties": {
+        "metric": {
+          "type": "string",
+          "description": "指標 ID(ルールカタログ §5 の定義名。例: bigram_jaccard, token_count, occurrence_count)"
+        },
+        "method": {
+          "type": "string",
+          "description": "算式・算法の識別子(例: bigram-jaccard / simhash64+bigram-jaccard)"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "measured",
+            "not_applicable",
+            "insufficient_sample",
+            "unavailable"
+          ]
+        },
+        "value": {
+          "type": "number",
+          "description": "測定値。status = measured のとき必須。JSON の number は NaN/Infinity を表せないため有限値"
+        },
+        "unit": {
+          "type": "string",
+          "description": "単位(count / ratio / tokens / chars 等)"
+        },
+        "numerator": {
+          "type": "number",
+          "description": "比率の根拠となる分子"
+        },
+        "denominator": {
+          "type": "number",
+          "description": "比率の根拠となる分母・標本数"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "判定閾値"
+        },
+        "comparison": {
+          "type": "string",
+          "enum": [
+            ">=",
+            "<=",
+            "<",
+            ">"
+          ],
+          "description": "比較方向"
+        },
+        "scope": {
+          "type": "string",
+          "description": "測定の対象範囲(document_pair / leaf / corpus / symbol:、 等)"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "measured 以外のとき必須。計測不能・対象外の理由"
+        }
+      }
+    },
+    "location": {
+      "type": "object",
+      "description": "根拠位置 1 件(§7.3)。比較両側の位置を同じ形で表す",
+      "required": [
+        "file",
+        "span",
+        "role",
+        "approximate"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "対象ファイルの表示パス。role = counterpart なら比較相手のファイルを指す"
+        },
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "end": {
+          "$ref": "#/$defs/span",
+          "description": "範囲終端。正確に取れない場合は出力しない"
+        },
+        "snippet": {
+          "type": "string",
+          "description": "該当テキストの断片(先頭から数十字、改行は空白化)"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "counterpart",
+            "occurrence"
+          ]
+        },
+        "approximate": {
+          "type": "boolean",
+          "description": "近似位置なら true(形態素・平文化後の位置から正確なソース位置が取れない場合)"
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": [
+        "file",
+        "span",
+        "rule_id",
+        "category",
+        "severity",
+        "observation"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "対象ファイルの表示パス(cwd 配下なら cwd 相対、それ以外は絶対パス。normalize_display の正)"
+        },
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "rule_id": {
+          "type": "string",
+          "pattern": "^[a-z]+/[a-z-]+$",
+          "description": "ルール ID(例: efficiency/redundant-expression)"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "efficiency",
+            "consistency",
+            "structure",
+            "relation",
+            "merge"
+          ],
+          "description": "rule_id の前半(カテゴリ)。設計書 §5"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warn",
+            "info"
+          ]
+        },
+        "observation": {
+          "type": "string",
+          "description": "観察。計測値から直接言えること(旧 message)"
+        },
+        "review_questions": {
+          "type": "array",
+          "description": "AI・人間が文脈で判断する確認事項(旧 help)。空なら出力しない",
+          "items": {
+            "type": "string"
+          }
+        },
+        "measurements": {
+          "type": "array",
+          "description": "計測値列。空なら出力しない",
+          "items": {
+            "$ref": "#/$defs/measurement"
+          }
+        },
+        "locations": {
+          "type": "array",
+          "description": "追加の根拠位置列(主位置は span)。空なら出力しない",
+          "items": {
+            "$ref": "#/$defs/location"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "description": "解釈上の限界(意味的同一性を保証しない等)。空なら出力しない",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

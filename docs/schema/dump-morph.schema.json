@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/dump-morph.schema.json",
+  "title": "jaio dump morph",
+  "description": "jaio dump morph の出力(設計書 §7.2、Issue #16)。形態素解析結果のダンプ。check と同じ実効設定の識別情報を含む(#39)。version は jaio_report::SCHEMA_VERSION と連動する。",
+  "type": "object",
+  "required": ["kind", "version", "file", "config_fingerprint", "algorithms", "leaves"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "jaio/dump-morph",
+      "description": "出力の種別識別"
+    },
+    "version": {
+      "type": "integer",
+      "const": 2,
+      "description": "report.schema.json の schema_version と連動"
+    },
+    "file": {
+      "type": "string",
+      "description": "ダンプ対象ファイルの表示パス"
+    },
+    "config_fingerprint": {
+      "type": "string",
+      "description": "実効設定の正規化ハッシュ"
+    },
+    "algorithms": {
+      "type": "object",
+      "description": "前処理・算法の識別情報(check と同じ形式)",
+      "required": ["morphology", "tokenizer", "similarity", "build"],
+      "properties": {
+        "morphology": { "type": "string" },
+        "tokenizer": { "type": "string" },
+        "similarity": { "type": "string" },
+        "build": { "type": "string" }
+      }
+    },
+    "leaves": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["line", "kind", "morphs"],
+        "properties": {
+          "line": { "type": "integer", "minimum": 1 },
+          "kind": {
+            "type": "string",
+            "enum": ["heading", "paragraph", "list_item", "table_cell"]
+          },
+          "morphs": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/morph" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "morph": {
+      "type": "object",
+      "required": ["surface", "lemma", "pos1", "pos2", "conjugation_form", "reading"],
+      "properties": {
+        "surface": { "type": "string", "description": "表層形" },
+        "lemma": { "type": "string", "description": "正規化表記(Sudachi の normalized_form)" },
+        "pos1": { "type": "string", "description": "品詞1(大分類)" },
+        "pos2": { "type": "string", "description": "品詞2(中分類)" },
+        "conjugation_form": { "type": "string", "description": "活用形" },
+        "reading": { "type": "string", "description": "読み(カタカナ)" }
+      }
+    }
+  }
+}

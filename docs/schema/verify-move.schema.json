@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/verify-move.schema.json",
+  "title": "jaio verify-move report",
+  "description": "jaio verify-move --format json の出力(設計書 §7.2.1、#51)。文書移動の lossless 検証(行単位保全)の結果。version が同じ間は既存フィールドの削除・型変更を行わない(追加のみ)。",
+  "type": "object",
+  "required": ["kind", "version", "tool", "before", "after", "preserved", "total", "lost_lines", "added_lines", "limitations"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "jaio/verify-move",
+      "description": "出力の種別識別"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "出力構造のバージョン"
+    },
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "const": "jaio" },
+        "version": { "type": "string" }
+      }
+    },
+    "before": {
+      "type": "string",
+      "description": "移動元ファイルの表示パス"
+    },
+    "after": {
+      "type": "array",
+      "description": "移動先ファイルの表示パス(1 つ以上)",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "preserved": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "移動先で保全された実質行数"
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "移動元の実質行数"
+    },
+    "lost_lines": {
+      "type": "array",
+      "description": "未保全行(before にあって after 全体に無い行)",
+      "items": { "$ref": "#/$defs/line_entry" }
+    },
+    "added_lines": {
+      "type": "array",
+      "description": "追加行(after にのみ存在する行、参考)",
+      "items": { "$ref": "#/$defs/line_entry" }
+    },
+    "limitations": {
+      "type": "array",
+      "description": "検証方式の限界の説明",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "line_entry": {
+      "type": "object",
+      "required": ["file", "line", "text"],
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "text": { "type": "string", "description": "正規化後(見出しマーカー除去・リンク簡約・trim)の行テキスト" }
+      }
+    }
+  }
+}
