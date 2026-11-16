@@ -800,7 +800,7 @@ def main() -> int:
     if not Path(args.bin).exists():
         print(f"error: jaio バイナリが見つかりません: {args.bin}", file=sys.stderr)
         print(
-            "hint: cargo build -p jaio-cli してから再実行してください", file=sys.stderr
+            "hint: cargo build -p jaio-cli --features embedded-dict してから再実行してください", file=sys.stderr
         )
         return 2
 

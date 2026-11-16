@@ -58,23 +58,8 @@ pub(crate) fn validate_config(config: &Config) -> Result<()> {
     // 相対化基準は jaio.toml の配置ディレクトリ(#76)
     RuleExcludes::build(&config.lint.rule_excludes, config.toml_base())?;
     // lint.rules / lint.rule_excludes のルール ID typo は黙って無効化されるため
-    // 早期エラーにする(#36)。「既知」の一覧は辞書順(HashSet 反復に依存しない
-    // 決定的な表示、#110)
-    let mut known: Vec<&'static str> = known_rule_ids();
-    known.sort_unstable();
-    let known_list = known.join(", ");
-    for id in config.lint.rules.keys() {
-        if !known.contains(&id.as_str()) {
-            anyhow::bail!("lint.rules に未知のルール ID があります: {id}(既知: {known_list})");
-        }
-    }
-    for id in config.lint.rule_excludes.keys() {
-        if !known.contains(&id.as_str()) {
-            anyhow::bail!(
-                "lint.rule_excludes に未知のルール ID があります: {id}(既知: {known_list})"
-            );
-        }
-    }
+    // 早期エラーにする(#36)。照合は規則の登録簿が担う(設計書 §6.4)
+    rule_registry()?.validate_lint(&config.lint)?;
     Ok(())
 }
 
@@ -111,7 +96,10 @@ mod inline_config_tests {
         let config = config_from_inline("[paths]\nexclude = [\"tmp/\"]\n")?;
         assert!(config.paths.exclude.contains(&"tmp/".to_string()));
         // 既定は上書きされない
-        assert_eq!(config.style.target, jaio_core::config::StyleTarget::Polite);
+        assert_eq!(
+            config.style.target,
+            oboro_ja_core::config::StyleTarget::Polite
+        );
         // ファイル経路と同じ追加検証: lint.rules の未知 ID は早期エラー
         let err = config_from_inline("[lint.rules]\n\"no/such-rule\" = \"warn\"\n");
         assert!(err.is_err(), "未知のルール ID はエラーになるはず");

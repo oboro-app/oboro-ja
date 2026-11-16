@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/dump-corpus.schema.json",
   "title": "jaio dump corpus",
-  "description": "jaio dump corpus の出力(設計書 §7.2、Issue #16/#39)。Corpus の統計(文書別 tokens/body_chars/sections・重複ペア・コメント入力)と check と同じ context を持つ。被リンク数・参照元一覧は含まない(被リンクは relation/orphan・merge/consolidation-plan の診断 measurements にのみ出る)。context の構造は report.schema.json の context と同じ(#39)。version は jaio_report::SCHEMA_VERSION と連動する。フィールドの削除・型変更は version 更新の前提でのみ行う。",
+  "description": "jaio dump corpus の出力(設計書 §7.2、Issue #16/#39)。Corpus の統計(文書別 tokens/body_chars/sections・重複ペア・コメント入力)と check と同じ context を持つ。被リンク数・参照元一覧は含まない(被リンクは relation/orphan・merge/consolidation-plan の診断 measurements にのみ出る)。context の構造は report.schema.json の context と同じ(#39)。version は oboro_jaio::report::SCHEMA_VERSION と連動する。フィールドの削除・型変更は version 更新の前提でのみ行う。",
   "type": "object",
   "required": [
     "kind",

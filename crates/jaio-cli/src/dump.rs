@@ -1,8 +1,8 @@
 use super::*;
 
 /// テキストリーフの種別を JSON 用の文字列にする。
-pub(crate) fn leaf_kind_name(kind: jaio_parse::doc::LeafKind) -> &'static str {
-    use jaio_parse::doc::LeafKind;
+pub(crate) fn leaf_kind_name(kind: oboro_ja_core::doc::LeafKind) -> &'static str {
+    use oboro_ja_core::doc::LeafKind;
     match kind {
         LeafKind::Heading => "heading",
         LeafKind::Paragraph => "paragraph",
@@ -29,7 +29,7 @@ pub fn run_dump_doc(path: &Path, out: &mut impl Write, config: &Config) -> Resul
 
     let value = serde_json::json!({
         "kind": "jaio/dump-doc",
-        "version": jaio_report::SCHEMA_VERSION,
+        "version": oboro_jaio::report::SCHEMA_VERSION,
         "file": normalize_display(path),
         "frontmatter": frontmatter_json,
         "headings": headings.iter().map(|h| serde_json::json!({
@@ -47,7 +47,7 @@ pub fn run_dump_doc(path: &Path, out: &mut impl Write, config: &Config) -> Resul
         "links": doc.links.iter().map(|l| serde_json::json!({
             "url": l.url,
             "line": l.line,
-            "kind": if l.kind == jaio_parse::doc::LinkKind::Image { "image" } else { "link" },
+            "kind": if l.kind == oboro_ja_core::doc::LinkKind::Image { "image" } else { "link" },
         })).collect::<Vec<_>>(),
     });
     writeln!(
@@ -82,7 +82,7 @@ pub fn run_dump_morph(path: &Path, out: &mut impl Write, config: &Config) -> Res
     }
     let value = serde_json::json!({
         "kind": "jaio/dump-morph",
-        "version": jaio_report::SCHEMA_VERSION,
+        "version": oboro_jaio::report::SCHEMA_VERSION,
         "file": normalize_display(path),
         "config_fingerprint": config_fingerprint(config),
         "algorithms": algorithms(config, &dict_id),
@@ -122,8 +122,8 @@ pub fn run_dump_corpus(
     // check と同じ入力識別(#36/#39)
     let mut sources: Vec<JsonSource> = Vec::new();
     let mut section_inputs: Vec<(
-        Vec<jaio_parse::doc::TextLeaf>,
-        Vec<jaio_parse::doc::Heading>,
+        Vec<oboro_ja_core::doc::TextLeaf>,
+        Vec<oboro_ja_core::doc::Heading>,
     )> = Vec::new();
 
     for file in &files {
@@ -239,7 +239,7 @@ pub fn run_dump_corpus(
     );
     let value = serde_json::json!({
         "kind": "jaio/dump-corpus",
-        "version": jaio_report::SCHEMA_VERSION,
+        "version": oboro_jaio::report::SCHEMA_VERSION,
         "analysis_complete": analysis_complete,
         "context": context,
         "docs": docs_json,
@@ -506,7 +506,7 @@ mod dump_tests {
         let dir = std::env::temp_dir().join("jaio-dict-ident-test");
         let dict = dir.join("dict");
         fs::create_dir_all(&dict)?;
-        for name in jaio_parse::morph::DICTIONARY_FILES {
+        for name in oboro_ja_core::dict::DICTIONARY_FILES {
             fs::write(dict.join(name), format!("seed-{name}"))?;
         }
         let spec = format!("file://{}", dict.display());
@@ -545,7 +545,7 @@ mod dump_tests {
     #[test]
     fn embedded_uri_spec_is_identified_as_embedded() {
         let id = dictionary_identity(Some("embedded://sudachidict"));
-        match jaio_parse::morph::embedded_dict_version() {
+        match oboro_ja_core::morph::embedded_dict_version() {
             Some(version) => {
                 assert_eq!(id.display, format!("embedded:sudachidict@{version}"));
             }

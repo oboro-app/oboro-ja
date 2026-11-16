@@ -1,10 +1,16 @@
-//! jaio-core: 診断モデル・設定を置く核心 crate(依存最小)。
+//! oboro-ja-core: 日本語の文章の部品の共通の土台(設計書 §6.3)。
 //!
-//! 設計の正本は `docs/design.md`。ルール trait は DocContext が jaio-parse の型を
-//! 参照するため jaio-rules 側に置く(設計書 §6.1)。
+//! 診断モデル・設定・文書の読み方(comrak)・日本語の分け方(lindera と辞書)・
+//! トークン計測(tiktoken)・規則の登録簿を置く。設計の正本は `docs/design.md`。
+//! 規則の実装と出力形式は持たない(ルール trait は oboro-jaio の rules module)。
 
-pub mod comments;
 pub mod config;
+pub mod dict;
+pub mod doc;
+pub mod ja;
+pub mod morph;
+pub mod registry;
+pub mod tokencount;
 
 /// パターン系設定の照合用に絶対パスを基準ディレクトリ(jaio.toml 親 → cwd)
 /// 基準で相対化する(#76)。config モジュールで定義し、ルール側からも使う

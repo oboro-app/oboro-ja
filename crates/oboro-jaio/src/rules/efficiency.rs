@@ -1,15 +1,15 @@
 //! efficiency カテゴリ: トークン効率(設計書 §5.1)。
 //! 置き換え先のある冗長表現と削除候補のフィラーは別ルールとして扱う。
 
+use crate::index::normalize_text;
 use anyhow::Result;
-use jaio_core::{Diagnostic, Location, Measurement, Severity, Span};
-use jaio_index::normalize_text;
-use jaio_parse::doc::TextLeaf;
-use jaio_parse::ja::SentenceSpan;
-use jaio_parse::ja::split_sentences_spans;
+use oboro_ja_core::doc::TextLeaf;
+use oboro_ja_core::ja::SentenceSpan;
+use oboro_ja_core::ja::split_sentences_spans;
+use oboro_ja_core::{Diagnostic, Location, Measurement, Severity, Span};
 use std::collections::HashMap;
 
-use crate::{Coverage, DocContext, DocumentRule, RuleRun};
+use super::{Coverage, DocContext, DocumentRule, RuleRun};
 
 /// 冗長表現パターン(表現, 置き換え先)。空の置き換え先は削除候補を意味する。
 /// 長いパターンを先に並べ、短いパターンの重複検出を防ぐ。
@@ -235,7 +235,7 @@ pub struct TokenDensityRule;
 
 /// コンテンツ語(名詞・動詞)かどうか。名詞の非自立(こと・ため 等)と
 /// 代名詞は機能語に近いためコンテンツ語に数えない。
-fn is_content_word(m: &jaio_parse::morph::Morph) -> bool {
+fn is_content_word(m: &oboro_ja_core::morph::Morph) -> bool {
     match m.pos1.as_str() {
         "動詞" => true,
         "名詞" => !matches!(m.pos2.as_str(), "非自立" | "代名詞" | "数詞"),
@@ -265,7 +265,7 @@ impl DocumentRule for TokenDensityRule {
         for leaf in ctx
             .leaves
             .iter()
-            .filter(|l| l.kind == jaio_parse::doc::LeafKind::Paragraph)
+            .filter(|l| l.kind == oboro_ja_core::doc::LeafKind::Paragraph)
         {
             let tokens = ctx.counter.count(&leaf.text);
             if tokens < TOKEN_DENSITY_MIN_TOKENS {
@@ -426,7 +426,7 @@ impl DocumentRule for RepeatedQuoteRule {
         let mut index: std::collections::HashMap<String, Vec<(usize, String)>> =
             std::collections::HashMap::new();
         for leaf in ctx.leaves.iter().filter(|l| DocContext::is_body_leaf(l)) {
-            for sentence in jaio_parse::ja::split_sentences(&leaf.text) {
+            for sentence in oboro_ja_core::ja::split_sentences(&leaf.text) {
                 let normalized = normalize_text(&sentence.text);
                 if normalized.chars().count() >= min_chars {
                     // スニペット用に元の文も保持する(Issue #19)
@@ -467,7 +467,7 @@ impl DocumentRule for RepeatedQuoteRule {
                 diag.locations.push(Location::occurrence(
                     ctx.doc.display.clone(),
                     Span { line, col: 1 },
-                    jaio_core::snippet(text, SNIPPET_CHARS),
+                    oboro_ja_core::snippet(text, SNIPPET_CHARS),
                 ));
             }
             diags.push(diag);
@@ -555,7 +555,7 @@ impl DocumentRule for LongSentenceRule {
                     self.id(),
                     format!(
                         "長い文です(和文 {chars} 文字、閾値 {min_chars} 文字): 「{}」",
-                        jaio_core::snippet(&sent.text, SNIPPET_CHARS)
+                        oboro_ja_core::snippet(&sent.text, SNIPPET_CHARS)
                     ),
                 )
                 .severity(Severity::Warn)
@@ -615,7 +615,7 @@ impl DocumentRule for NoCommaRule {
                     self.id(),
                     format!(
                         "読点を含まない長い文です(和文 {chars} 文字、閾値 {min_chars} 文字): 「{}」",
-                        jaio_core::snippet(&sent.text, SNIPPET_CHARS)
+                        oboro_ja_core::snippet(&sent.text, SNIPPET_CHARS)
                     ),
                 )
                 .severity(Severity::Warn)

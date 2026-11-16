@@ -1,4 +1,4 @@
-//! jaio-collect: ソースコードからのコメント抽出(tree-sitter、設計書 §6.3)。
+//! ソースコードからのコメント抽出(tree-sitter、設計書 §6.3)。
 //! Rust / TypeScript / Python / Go / Bash / Swift の comment ノードを対象とする。
 
 use std::path::Path;

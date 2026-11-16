@@ -1,4 +1,4 @@
-//! jaio-rules: ルール trait(設計書 §6.1)とルール実装群。
+//! ルール trait(設計書 §6.1)とルール実装群。
 
 mod consistency;
 mod corpus;
@@ -10,12 +10,13 @@ pub use structure::{SectionSlice, extract_sections};
 
 use anyhow::Result;
 use comrak::nodes::NodeValue;
-use jaio_core::config::Config;
-use jaio_core::config::StyleOverrides;
-use jaio_core::{Diagnostic, Span};
-use jaio_parse::doc::{Doc, Heading, LeafKind, TextLeaf};
-use jaio_parse::morph::{Analyzer, Morph};
-use jaio_parse::tokencount::TokenCounter;
+use oboro_ja_core::config::Config;
+use oboro_ja_core::config::StyleOverrides;
+use oboro_ja_core::doc::{Doc, Heading, LeafKind, TextLeaf};
+use oboro_ja_core::morph::{Analyzer, Morph};
+use oboro_ja_core::registry::{RuleEntry, RuleRegistry};
+use oboro_ja_core::tokencount::TokenCounter;
+use oboro_ja_core::{Diagnostic, Span};
 
 use std::collections::{HashMap, HashSet};
 use std::ops::Range;
@@ -71,7 +72,7 @@ impl RuleRun {
 }
 
 /// 単一ドキュメント内で完結するルール(設計書 §6.1)。
-/// DocContext が jaio-parse の型を参照するため、この crate に trait を置く。
+/// 規則の実装は診断の crate が持ち、土台(oboro-ja-core)には置かない(設計書 §6.3)。
 pub trait DocumentRule: Send + Sync {
     /// ルール ID(例: "efficiency/redundant-expression")
     fn id(&self) -> &'static str;
@@ -94,7 +95,7 @@ pub struct DocContext<'a> {
     /// トークンカウンタ
     pub counter: &'a TokenCounter,
     /// 検出感度の設定(jaio.toml の `[detection]`)
-    pub detection: &'a jaio_core::config::DetectionConfig,
+    pub detection: &'a oboro_ja_core::config::DetectionConfig,
     /// 形態素解析のキャッシュ(テキスト → 解析結果)。ルール間で再解析を避ける
     pub cache: &'a mut HashMap<String, Arc<[Morph]>>,
 }
@@ -278,7 +279,7 @@ struct MoveLineGuards {
 /// comrak の解析結果から保護範囲を集める
 fn move_line_guards(source: &str) -> MoveLineGuards {
     let arena = comrak::Arena::new();
-    let root = comrak::parse_document(&arena, source, &jaio_parse::doc::markdown_options());
+    let root = comrak::parse_document(&arena, source, &oboro_ja_core::doc::markdown_options());
     let lines: Vec<&str> = source.lines().collect();
     let mut code_block_lines = HashSet::new();
     let mut heading_markers = HashMap::new();
@@ -465,7 +466,7 @@ pub fn default_corpus_rules(
         Box::new(corpus::OrphanRule {
             // base は構築時に実パス表記へ解決する(#106: relativize_for_match
             // の呼び出しごとの canonicalize を避ける)
-            base: config.toml_base().map(jaio_core::resolved_base),
+            base: config.toml_base().map(oboro_ja_core::resolved_base),
         }),
         Box::new(corpus::MoveIntegrityRule {
             moves: config.verification.moves.clone(),
@@ -478,9 +479,48 @@ pub fn default_corpus_rules(
     ]
 }
 
+/// jaio の規則の持ち主名(設計書 §6.4)。
+pub const RULE_OWNER: &str = "jaio";
+
+/// jaio の全規則を登録簿へ登録する(Document ルール → Corpus ルールの順、
+/// 設計書 §6.4)。登録簿に同じ ID が登録済みならエラーになる(1 規則 1 持ち主)
+pub fn register_rules(registry: &mut RuleRegistry) -> Result<()> {
+    let config = Config::default();
+    let document = default_rules(&config);
+    let corpus = default_corpus_rules(&config, &[]);
+    let rules = document
+        .iter()
+        .map(|rule| (rule.id(), rule.description()))
+        .chain(corpus.iter().map(|rule| (rule.id(), rule.description())));
+    for (id, description) in rules {
+        registry.register(RuleEntry {
+            id,
+            owner: RULE_OWNER,
+            description,
+        })?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// 全規則が jaio を持ち主として 1 度ずつ登録される(設計書 §6.4)
+    #[test]
+    fn register_rules_registers_every_rule_once_under_jaio() -> Result<()> {
+        let mut registry = RuleRegistry::new();
+        register_rules(&mut registry)?;
+        let config = Config::default();
+        let expected = default_rules(&config).len() + default_corpus_rules(&config, &[]).len();
+        assert_eq!(registry.entries().len(), expected);
+        assert!(registry.entries().iter().all(|e| e.owner == RULE_OWNER));
+        // 登録順は Document ルール → Corpus ルール(`jaio rules` の表示順)
+        assert_eq!(registry.entries()[0].id, default_rules(&config)[0].id());
+        // 同じ登録簿へ 2 度目の登録はできない(1 規則 1 持ち主)
+        assert!(register_rules(&mut registry).is_err());
+        Ok(())
+    }
 
     #[test]
     fn count_excluding_preferred_is_symmetric_for_reversed_pairs() {
@@ -491,7 +531,7 @@ mod tests {
         assert_eq!(count_excluding_preferred(text, "サーバー", "サーバ"), 2);
         // 逆定義(推奨が短い): other「サーバー」の範囲に preferred「サーバ」が
         // 含まれるため、other を除いた preferred は 0 になる(数えないのが正)。
-        // この向きのペアは jaio-core::Config::validate で設定エラーになる(#100)
+        // この向きのペアは oboro_ja_core::config::Config::validate で設定エラーになる(#100)
         assert_eq!(count_excluding_preferred(text, "サーバ", "サーバー"), 0);
     }
 

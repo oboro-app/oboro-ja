@@ -1,11 +1,11 @@
 //! structure カテゴリ: Markdown 構造の乱れ(設計書 §5.3)。
 
+use crate::index::{bigram_jaccard_parts, normalize_text};
 use anyhow::Result;
-use jaio_core::{Diagnostic, Measurement, Severity, Span};
-use jaio_index::{bigram_jaccard_parts, normalize_text};
-use jaio_parse::doc::{Heading, TextLeaf};
+use oboro_ja_core::doc::{Heading, TextLeaf};
+use oboro_ja_core::{Diagnostic, Measurement, Severity, Span};
 
-use crate::{Coverage, DocContext, DocumentRule, RuleRun};
+use super::{Coverage, DocContext, DocumentRule, RuleRun};
 
 /// 見出しレベルの跳び(h2 → h4 等)を検出する。
 pub struct HeadingSkipRule;

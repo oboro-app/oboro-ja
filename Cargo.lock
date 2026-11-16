@@ -948,82 +948,12 @@ dependencies = [
  "anyhow",
  "clap",
  "ignore",
- "jaio-collect",
- "jaio-core",
- "jaio-index",
- "jaio-parse",
- "jaio-report",
- "jaio-rules",
  "jsonschema",
+ "oboro-ja-core",
+ "oboro-jaio",
  "rayon",
  "serde_json",
  "sha2",
-]
-
-[[package]]
-name = "jaio-collect"
-version = "0.9.4"
-dependencies = [
- "anyhow",
- "jaio-core",
- "tree-sitter",
- "tree-sitter-bash",
- "tree-sitter-go",
- "tree-sitter-python",
- "tree-sitter-rust",
- "tree-sitter-swift",
- "tree-sitter-typescript",
-]
-
-[[package]]
-name = "jaio-core"
-version = "0.9.4"
-dependencies = [
- "anyhow",
- "ignore",
- "serde",
- "serde_json",
- "toml",
-]
-
-[[package]]
-name = "jaio-index"
-version = "0.9.4"
-
-[[package]]
-name = "jaio-parse"
-version = "0.9.4"
-dependencies = [
- "anyhow",
- "comrak",
- "jaio-core",
- "lindera",
- "lindera-sudachidict",
- "serde",
- "tiktoken-rs",
-]
-
-[[package]]
-name = "jaio-report"
-version = "0.9.4"
-dependencies = [
- "jaio-core",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "jaio-rules"
-version = "0.9.4"
-dependencies = [
- "anyhow",
- "comrak",
- "ignore",
- "jaio-core",
- "jaio-index",
- "jaio-parse",
- "percent-encoding",
- "rayon",
 ]
 
 [[package]]
@@ -1366,6 +1296,46 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "oboro-ja-core"
+version = "0.9.4"
+dependencies = [
+ "anyhow",
+ "comrak",
+ "flate2",
+ "ignore",
+ "lindera",
+ "lindera-sudachidict",
+ "oboro-ja-core",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tar",
+ "tiktoken-rs",
+ "toml",
+]
+
+[[package]]
+name = "oboro-jaio"
+version = "0.9.4"
+dependencies = [
+ "anyhow",
+ "comrak",
+ "ignore",
+ "oboro-ja-core",
+ "percent-encoding",
+ "rayon",
+ "serde",
+ "serde_json",
+ "tree-sitter",
+ "tree-sitter-bash",
+ "tree-sitter-go",
+ "tree-sitter-python",
+ "tree-sitter-rust",
+ "tree-sitter-swift",
+ "tree-sitter-typescript",
 ]
 
 [[package]]

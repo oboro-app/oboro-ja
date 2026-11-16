@@ -362,7 +362,7 @@ def main() -> int:
     if not bin_path.exists():
         print(f"error: jaio バイナリが見つかりません: {bin_path}", file=sys.stderr)
         print(
-            "hint: cargo build --release -p jaio-cli してから再実行してください",
+            "hint: cargo build --release -p jaio-cli --features embedded-dict してから再実行してください",
             file=sys.stderr,
         )
         return 2

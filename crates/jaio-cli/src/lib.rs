@@ -1,5 +1,5 @@
 //! CLI の中核ロジック(設定読み込み・走査・解析実行・統計)。
-//! Markdown 走査(ignore)はここに残り、ソースコメント抽出は jaio-collect が担う(設計書 §6.3)。
+//! Markdown 走査(ignore)はここに残り、ソースコメント抽出は oboro-jaio の collect module が担う(設計書 §6.3)。
 
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -12,25 +12,26 @@ use std::time::{Duration, Instant, SystemTime};
 use anyhow::{Context, Result};
 use ignore::WalkBuilder;
 
-use jaio_core::comments::CommentFile;
-use jaio_core::config::{
+use oboro_ja_core::config::{
     AnalysisMode, Config, RuleExcludes, SeveritySetting, StyleOverrides, TokenEncoding,
 };
-use jaio_core::{Diagnostic, Severity};
-use jaio_index::{
+use oboro_ja_core::doc::{Doc, Heading, TextLeaf};
+use oboro_ja_core::morph::{Analyzer, Morph};
+use oboro_ja_core::registry::RuleRegistry;
+use oboro_ja_core::tokencount::TokenCounter;
+use oboro_ja_core::{Diagnostic, Severity};
+use oboro_jaio::comments::CommentFile;
+use oboro_jaio::index::{
     PairSearchMethod, SIMILARITY_BIN_WIDTH, bigram_hashes, jaccard_sorted, normalize_text,
     similarity_bin_index, similarity_histogram, top_similar_pairs,
 };
-use jaio_parse::doc::{Doc, Heading, TextLeaf};
-use jaio_parse::morph::{Analyzer, Morph};
-use jaio_parse::tokencount::TokenCounter;
-use jaio_report::{
+use oboro_jaio::report::{
     JsonAlgorithms, JsonCandidateSearch, JsonContext, JsonOperationalError, JsonRuleStatus,
     JsonSource, JsonSummary, JsonTargets, PhaseTimings, top_rules, top_slow_rules,
 };
-use jaio_rules::{
+use oboro_jaio::rules::{
     Corpus, Coverage, DocContext, DocumentRule, SectionSlice, comparison_key, default_corpus_rules,
-    default_rules, extract_sections, normalize_path, substantive_lines,
+    default_rules, extract_sections, normalize_path, register_rules, substantive_lines,
 };
 use rayon::prelude::*;
 use sha2::Digest as _;

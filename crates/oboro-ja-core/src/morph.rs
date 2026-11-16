@@ -2,9 +2,9 @@
 //! 外部辞書))。設計書 §4.2 の層 2 の基盤。
 
 use anyhow::{Context as _, Result};
-use std::path::Path;
 
-use jaio_core::config::AnalysisMode;
+use crate::config::AnalysisMode;
+use crate::dict::ensure_sudachi_format;
 use lindera::dictionary::load_dictionary;
 use lindera::mode::{Mode, Penalty};
 use lindera::segmenter::Segmenter;
@@ -46,6 +46,7 @@ pub struct Analyzer {
 
 impl Analyzer {
     /// 埋め込み Sudachi 辞書で解析器を作る(既定モード)。
+    /// 辞書を埋め込まないビルド(既定)ではエラーになる
     pub fn new() -> Result<Self> {
         Self::with_mode(AnalysisMode::default())
     }
@@ -71,7 +72,7 @@ impl Analyzer {
                 // details のフィールド配置が変わり、品詞・読み・正規化表記が
                 // 静かに別フィールドの値になる。metadata.json の存在で
                 // Sudachi 形式かを確認する(#98)
-                verify_sudachi_dictionary(path)
+                ensure_sudachi_format(path)
                     .with_context(|| format!("辞書の形式検証に失敗しました: {path}"))?;
                 load_dictionary(path)
                     .with_context(|| format!("辞書の読み込みに失敗しました: {path}"))?
@@ -126,35 +127,6 @@ pub fn embedded_dict_version() -> Option<&'static str> {
 fn field<'a>(details: &[&'a str], index: usize, fallback: &'a str) -> &'a str {
     details.get(index).copied().unwrap_or(fallback)
 }
-
-/// 辞書ディレクトリが Sudachi 形式であることを確認する(#98)。
-/// `file://` URI でも指定できるため剥いでから検査する
-fn verify_sudachi_dictionary(path: &str) -> Result<()> {
-    let fs_path = path.strip_prefix("file://").unwrap_or(path);
-    let metadata = Path::new(fs_path).join("metadata.json");
-    anyhow::ensure!(
-        metadata.is_file(),
-        "辞書ディレクトリに metadata.json がありません。jaio は Sudachi 形式の辞書(lindera-sudachidict で展開されたもの)にのみ対応しています: {}",
-        fs_path
-    );
-    Ok(())
-}
-
-/// lindera のファイル辞書ローダが実際に読み込むファイル集合の正本(#36)。
-/// `scripts/package-dict.sh` の必須ファイル検査と同じ集合に保つ。
-/// 外部辞書の内容識別はこの集合を対象にし、sys.dic のような
-/// 別形式の固定ファイル名には依存しない
-pub const DICTIONARY_FILES: [&str; 9] = [
-    "char_def.bin",
-    "dict.trie",
-    "dict.vals",
-    "dict.valsidx",
-    "dict.words",
-    "dict.wordsidx",
-    "matrix.mtx",
-    "metadata.json",
-    "unk.bin",
-];
 
 #[cfg(test)]
 mod tests {

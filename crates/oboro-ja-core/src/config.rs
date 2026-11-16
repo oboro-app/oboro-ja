@@ -62,8 +62,9 @@ pub struct AnalysisConfig {
     /// トークン計測用エンコーディング
     #[serde(default)]
     pub encoding: TokenEncoding,
-    /// 外部の lindera 辞書ディレクトリ(Sudachi スキーマ)。未指定なら埋め込み辞書を使う。
-    /// 埋め込み辞書なしでビルドした場合(`--no-default-features`)は必須
+    /// 外部の lindera 辞書ディレクトリ(Sudachi スキーマ)。既定のビルドは辞書を
+    /// 埋め込まないため必須。未指定で使えるのは feature `embedded-dict` の
+    /// ビルドだけで、その場合は埋め込み辞書を使う(設計書 §6.5)
     #[serde(default)]
     pub dictionary: Option<String>,
 }
@@ -553,7 +554,7 @@ pub fn relativize_for_match(path: &Path, base: Option<&Path>) -> PathBuf {
 }
 
 /// パスの `.`・`..` を字句解決する(symlink は解決しない)。
-/// jaio-core 内は依存を最小にするためローカル実装とする
+/// 土台の中は依存を最小にするためローカル実装とする
 pub fn normalize_lexical(path: &Path) -> PathBuf {
     let mut out = PathBuf::new();
     for component in path.components() {
@@ -609,7 +610,7 @@ impl Config {
 
     /// TOML テキストから設定を読む。構文に加えて意味的な検証(閾値の範囲・
     /// 有限性・用語ペアの形)も行い、無効な設定は早期エラーにする(#36)。
-    /// ルール ID の既知チェックはルール一覧を持つ CLI 側で行う。
+    /// ルール ID の照合は規則の登録簿(`registry::RuleRegistry::validate_lint`)が担う。
     pub fn from_toml(text: &str) -> Result<Self> {
         let config: Config = toml::from_str(text)?;
         config.validate()?;
@@ -994,7 +995,7 @@ terms = ["行なう"]
         assert_eq!(n("/jaio/docs/../README.md"), "/jaio/README.md");
         assert_eq!(n("/jaio/docs/./x.md"), "/jaio/docs/x.md");
         assert_eq!(n("docs/./x.md"), "docs/x.md");
-        // 解析ルートを超える `..` は潜ったまま残す(jaio_rules::normalize と同じ)
+        // 解析ルートを超える `..` は潜ったまま残す(oboro_jaio::rules::normalize_path と同じ)
         assert_eq!(n("../x.md"), "../x.md");
         assert_eq!(n("a/../../b"), "../b");
         assert_eq!(n("/a/b/"), "/a/b");
@@ -1139,7 +1140,7 @@ languages = ["rust", "python"]
             paths: PathsConfig {
                 include: vec![],
                 exclude: vec![
-                    "crates/jaio-rules/tests/fixtures".to_string(),
+                    "crates/oboro-jaio/tests/fixtures".to_string(),
                     "AGENTS.md".to_string(),
                     "target/".to_string(),
                 ],
@@ -1147,7 +1148,7 @@ languages = ["rust", "python"]
             },
             ..Default::default()
         };
-        assert!(config.is_excluded("crates/jaio-rules/tests/fixtures/sample.md"));
+        assert!(config.is_excluded("crates/oboro-jaio/tests/fixtures/sample.md"));
         assert!(config.is_excluded("AGENTS.md"));
         assert!(config.is_excluded("docs/AGENTS.md"));
         assert!(config.is_excluded("target/debug/jaio"));
@@ -1164,7 +1165,7 @@ languages = ["rust", "python"]
             },
             ..Default::default()
         };
-        assert!(mid.is_excluded("jaio-rules/tests/fixtures/sample.md"));
+        assert!(mid.is_excluded("oboro-jaio/tests/fixtures/sample.md"));
         assert!(!mid.is_excluded("docs/my-fixtures/a.md"));
     }
 
