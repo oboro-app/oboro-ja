@@ -17,7 +17,7 @@ cargo test --workspace
 echo "== [4/6] jaio 自己適用(常設ドッグフーディング、#71)=="
 # このリポジトリの文書を jaio 自身で解析する。error 重大度の診断、または
 # 実行エラー(解析未完了を含む exit 2)で落とす。warn / info は許容
-# (handover SKILL.md のテンプレート見出し等の既知ノイズのため。
+# (将来のノイズが増えた場合は jaio.toml の [lint.rule_excludes] 等で管理する。
 # 抑制仕組みの設計は #71)。cargo test で debug ビルド済み、実測 2 秒弱
 cargo run -q -p jaio-cli -- check . --quiet
 
