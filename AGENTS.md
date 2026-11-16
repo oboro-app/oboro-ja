@@ -166,7 +166,7 @@ oboro-ja/
 | 記号 | ASCII(emoji は不使用) |
 | `docs/` の文書 | 丁寧体(ですます体)かつ無駄のない文章(設計書 §1.3) |
 | ハーネス文書(この AGENTS.md・`.oboro/` の日本語文書) | である体 |
-| コミットメッセージ | 変更の意図を 1 行(conventional commits 風: feat / fix / docs / chore / test / refactor) |
+| コミットメッセージ | 件名は変更の意図を 1 行(conventional commits 風: feat / fix / docs / chore / test / refactor)。ボディ節(`## Intent` / `## History`)は `writing` スキルのコミット場面に従う |
 
 ## コーディング規約
 
@@ -204,7 +204,7 @@ oboro-ja/
 2. 設計と矛盾する変更が必要な場合は、先に `docs/design.md` を更新する
 3. 変更後は `./scripts/check-all.sh` を実行して全項目合格を確認する
 4. 未解決事項・検証待ちが残る場合は GitHub Issue を起票し、Issue 番号をコミットメッセージ等に残す。この変更で解消した項目があれば該当 Issue をクローズする
-5. コミットメッセージは変更の意図を 1 行で書く(conventional commits 風: feat / fix / docs / chore / test / refactor)
+5. コミットの件名は変更の意図を 1 行で書く(conventional commits 風: feat / fix / docs / chore / test / refactor)。ボディ節の形は表記(Notation)と `writing` スキルに従う
 
 禁止事項:
 

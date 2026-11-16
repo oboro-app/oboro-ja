@@ -34,7 +34,7 @@ Pick tools that are fast, comprehensive, and need little configuration. Prefer o
 
 ## oboro baseline
 
-The default when a repo has not decided otherwise. A repo may tighten or loosen an item by editing the tool's own config and writing the reason in the knowledge file. Do not add a separate settings mechanism.
+The default when a repo has not decided otherwise. A repo may tighten or loosen an item by editing the tool's own config and recording the reason in this skill's repo section or `AGENTS.md`. Do not add a separate settings mechanism.
 
 | Area | Baseline |
 |---|---|

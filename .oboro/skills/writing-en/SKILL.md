@@ -42,7 +42,7 @@ Conversational and friendly, not frivolous: contractions are fine, jokes are not
 
 ## Token-efficient harness English
 
-Under `.oboro/` (skills, knowledge, checks), English costs tokens on every run of every agent.
+Under `.oboro/` (skills etc.), English costs tokens on every run of every agent.
 
 | Rule | Example |
 |---|---|
