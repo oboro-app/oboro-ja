@@ -288,7 +288,7 @@ oboro-ja/
 |---|---|
 | `verify_dir` | 辞書ディレクトリに lindera が読む 9 ファイル(`DICTIONARY_FILES`)が揃っているかを確かめ、内容 fingerprint(`manifest_sha256`)を返す |
 | `verify_archive_sha256` | 配布物(`scripts/package-dict.sh` が作る tar.gz)の SHA-256 を、同梱の `.sha256` の値と照合する |
-| `install_archive` | 配布物を照合してから展開し、辞書ディレクトリとして置く。照合に失敗した配布物と、想定外の項目を含む配布物は置かない |
+| `install_archive` | 配布物を照合してから展開し、辞書ディレクトリとして置く。書き出すのは `DICTIONARY_FILES` の通常ファイルだけで、ほかの項目は書き出さない。照合に失敗した配布物と、9 ファイルが 1 つのディレクトリに揃わない配布物は置かない。置き先が既にあるときは上書きしない |
 
 配布物のダウンロードは呼ぶ側が行います(CLI の利用者は `gh release download`、組み込む側は自前の通信手段)。テストは dev-dependencies で `embedded-dict` を有効にするため、`cargo test` は辞書を使う試験をそのまま実行します。
 

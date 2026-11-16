@@ -9,24 +9,6 @@ pub(crate) struct DictIdentity {
     pub(crate) fingerprint: Option<String>,
 }
 
-/// 外部辞書ディレクトリの内容 fingerprint を返す。
-/// lindera が実際にロードするファイル集合(`DICTIONARY_FILES`)の
-/// 「名前・バイト長・SHA-256」のマニフェストをさらに SHA-256 した
-/// 決定的な識別子。大きい辞書に備えてファイル内容はストリーミングで読む
-pub(crate) fn dictionary_manifest_sha256(dir: &Path) -> Result<String> {
-    let mut manifest = String::new();
-    for name in oboro_ja_core::morph::DICTIONARY_FILES {
-        let file_path = dir.join(name);
-        let mut file = fs::File::open(&file_path)
-            .with_context(|| format!("辞書ファイルを開けません: {}", file_path.display()))?;
-        let mut hasher = sha2::Sha256::new();
-        let len = std::io::copy(&mut file, &mut hasher)
-            .with_context(|| format!("辞書ファイルを読めません: {}", file_path.display()))?;
-        manifest.push_str(&format!("{name}\t{len}\t{:x}\n", hasher.finalize()));
-    }
-    Ok(format!("{:x}", sha2::Sha256::digest(manifest.as_bytes())))
-}
-
 /// 埋め込み辞書の表示識別子(#64)。crate 版が取れるときは
 /// `embedded:<name>@<crate-version>`。上流 SudachiDict 版は build 時に
 /// vendored されるため実行時には取れず、同梱データを一意に決める
@@ -62,7 +44,7 @@ pub(crate) fn dictionary_identity(spec: Option<&str>) -> DictIdentity {
         },
         Some(spec) => {
             let fs_path = spec.strip_prefix("file://").unwrap_or(spec);
-            match dictionary_manifest_sha256(Path::new(fs_path)) {
+            match oboro_ja_core::dict::manifest_sha256(Path::new(fs_path)) {
                 Ok(hash) => DictIdentity {
                     display: format!("external:{spec}:manifest-sha256:{hash}"),
                     fingerprint: Some(hash),

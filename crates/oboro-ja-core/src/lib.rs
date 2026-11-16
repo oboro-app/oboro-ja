@@ -1,13 +1,15 @@
 //! oboro-ja-core: 日本語の文章の部品の共通の土台(設計書 §6.3)。
 //!
-//! 診断モデル・設定・文書の読み方(comrak)・日本語の分け方(lindera)・
-//! トークン計測(tiktoken)を置く。設計の正本は `docs/design.md`。
+//! 診断モデル・設定・文書の読み方(comrak)・日本語の分け方(lindera と辞書)・
+//! トークン計測(tiktoken)・規則の登録簿を置く。設計の正本は `docs/design.md`。
 //! 規則の実装と出力形式は持たない(ルール trait は oboro-jaio の rules module)。
 
 pub mod config;
+pub mod dict;
 pub mod doc;
 pub mod ja;
 pub mod morph;
+pub mod registry;
 pub mod tokencount;
 
 /// パターン系設定の照合用に絶対パスを基準ディレクトリ(jaio.toml 親 → cwd)

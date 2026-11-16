@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 
 BIN="${JAIO_BIN:-target/release/jaio}"
 [ -x "$BIN" ] || BIN=target/debug/jaio
-[ -x "$BIN" ] || { echo "error: jaio バイナリがない(cargo build -p jaio-cli)"; exit 2; }
+[ -x "$BIN" ] || { echo "error: jaio バイナリがない(cargo build -p jaio-cli --features embedded-dict)"; exit 2; }
 
 # 観察対象リポジトリは引数で渡す (公開リポジトリに対象の名前を残さない)
 REPOS=("$@")

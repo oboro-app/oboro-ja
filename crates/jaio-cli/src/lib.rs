@@ -17,6 +17,7 @@ use oboro_ja_core::config::{
 };
 use oboro_ja_core::doc::{Doc, Heading, TextLeaf};
 use oboro_ja_core::morph::{Analyzer, Morph};
+use oboro_ja_core::registry::RuleRegistry;
 use oboro_ja_core::tokencount::TokenCounter;
 use oboro_ja_core::{Diagnostic, Severity};
 use oboro_jaio::comments::CommentFile;
@@ -30,7 +31,7 @@ use oboro_jaio::report::{
 };
 use oboro_jaio::rules::{
     Corpus, Coverage, DocContext, DocumentRule, SectionSlice, comparison_key, default_corpus_rules,
-    default_rules, extract_sections, normalize_path, substantive_lines,
+    default_rules, extract_sections, normalize_path, register_rules, substantive_lines,
 };
 use rayon::prelude::*;
 use sha2::Digest as _;

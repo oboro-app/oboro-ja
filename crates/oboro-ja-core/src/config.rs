@@ -609,7 +609,7 @@ impl Config {
 
     /// TOML テキストから設定を読む。構文に加えて意味的な検証(閾値の範囲・
     /// 有限性・用語ペアの形)も行い、無効な設定は早期エラーにする(#36)。
-    /// ルール ID の既知チェックはルール一覧を持つ CLI 側で行う。
+    /// ルール ID の照合は規則の登録簿(`registry::RuleRegistry::validate_lint`)が担う。
     pub fn from_toml(text: &str) -> Result<Self> {
         let config: Config = toml::from_str(text)?;
         config.validate()?;
