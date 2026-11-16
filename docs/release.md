@@ -80,12 +80,38 @@ git push origin v<version>
 
 ### バージョニング
 
-- **パッチ**(`0.1.x`): バグ修正・ドキュメント整備
-- **マイナー**(`0.x.0`): ルール追加・出力形式の追加・設定キーの追加
-- **メジャー**(`x.0.0`): schema_version の更新・既存キーの削除・意味変更
+版は workspace 全体で 1 つです(`Cargo.toml` の `workspace.package.version`)。
+`oboro-ja-core`・`oboro-jaio`・`jaio-cli` を同じ版で出し、git の tag `v<version>` が
+その版の全 crate を指します。
 
-バージョンは `Cargo.toml` の `workspace.version` を更新してから
+| 変更の種類 | 0.x の間 | 1.0 以降 | 例 |
+|---|---|---|---|
+| 互換のない変更 | マイナー(`0.x.0`) | メジャー(`x.0.0`) | library crate の公開 API の削除・意味変更、crate 名・feature 名の変更、`schema_version` の更新、設定キーの削除 |
+| 互換のある追加 | マイナー(`0.x.0`) | マイナー(`x.y.0`) | ルール追加、出力形式の追加、設定キーの追加、公開 API の追加 |
+| 修正 | パッチ(`0.x.y`) | パッチ(`x.y.z`) | バグ修正、ドキュメント整備 |
+
+- 互換のない変更は、コミットの接頭辞が `fix` でもパッチでは出しません
+  (cargo は `0.x.y` 同士を互換として扱うため)。リリースノートに移行の方法を書きます
+- GitHub Release を公開した後の tag は付け替えません(取り込む側が tag で固定するため)。
+  直しは新しい版で出します
+
+バージョンは `Cargo.toml` の `workspace.package.version` を更新してから
 `scripts/release.sh`(引数なし)を実行する(自動で Cargo.toml から読む)。
+
+### crate を取り込む側の追随
+
+ほかのリポジトリが `oboro-ja-core`・`oboro-jaio` を取り込むときは、tag を固定した
+git の依存にします(書き方は [README](../README.md) の「crate として取り込む」)。
+`Cargo.lock` が tag の指す commit を記録するため、追随は取り込む側が版を上げたときだけ
+起こります。
+
+| 順 | 取り込む側の作業 |
+|---|---|
+| 1 | [GitHub Releases](https://github.com/oboro-app/oboro-ja/releases) で新しい tag と、互換のない変更の有無を確かめる |
+| 2 | `Cargo.toml` の `tag = "v<version>"` を新しい版へ書き換える(取り込む crate はすべて同じ tag に揃える) |
+| 3 | `cargo update -p oboro-ja-core -p oboro-jaio` で `Cargo.lock` の commit を更新する |
+| 4 | 取り込む側の検査を通す。互換のない変更を含む版では、リリースノートの移行の方法に従って直す |
+| 5 | 辞書を取り直すときは、同じリリースの `jaio-dict-*.tar.gz` と `.sha256` を使い、`oboro_ja_core::dict::install_archive` で照合して置く |
 
 ## リリーススクリプト
 
@@ -100,8 +126,8 @@ git push origin v<version>
 スクリプト内部の流れ:
 1. `gh auth status` でアカウント確認(リリース権限のあるアカウントだけを使う)
 2. `./scripts/check-all.sh` で品質ゲート
-3. 埋め込みビルドで辞書成果物を確保 → `package-dict.sh` で tar.gz 化
-4. `--no-default-features` で軽量バイナリ(20MB)をビルド
+3. 埋め込みビルド(`--features embedded-dict`)で辞書成果物を確保 → `package-dict.sh` で tar.gz 化
+4. 既定のビルドで軽量バイナリ(20MB)をビルド
 5. git タグ `v<version>` を作成
 6. `gh release create` でアップロード
 
@@ -162,7 +188,7 @@ AGENTS.md の「リリースの確認(変更ベース)」に、コミット前�
 
 | 症状 | 対処 |
 |---|---|
-| `gh release create` が 422(タグ重複) | `git tag -d v<ver> && git push origin :refs/tags/v<ver>` で削除してやり直す |
-| 辞書成果物が見つからない | `cargo build --release --workspace` を先に実行(埋め込みビルドが必要) |
+| `gh release create` が 422(タグ重複) | GitHub Release を公開する前に限り、`git tag -d v<ver> && git push origin :refs/tags/v<ver>` で削除してやり直す |
+| 辞書成果物が見つからない | `cargo build --release -p jaio-cli --features embedded-dict` を先に実行(埋め込みビルドが必要) |
 | pre-push ゲートが fmt で失敗 | `cargo fmt --all` → commit → push をやり直す |
-| no-dict バイナリで check が失敗 | `[analysis] dictionary` の指定漏れ。`jaio rules` は辞書なしで動作する |
+| 既定ビルドのバイナリで check が失敗 | `[analysis] dictionary` の指定漏れ。`jaio rules` は辞書なしで動作する |

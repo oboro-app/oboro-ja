@@ -168,7 +168,7 @@ lindera v6 の `Mode` は `Normal` / `Decompose(Penalty)` の 2 種のみで、S
 | ID | 検出 | 方法 |
 |---|---|---|
 | `relation/cross-doc-duplication` | 文書間の重複記述 | SimHash で候補ペアを列挙 → 文書本文の Jaccard で検証 → 最も類似するセクション組を見出し行で報告(重複位置の特定)。各文書について類似度上位 3 件の相手文書まで warn で報告し、残りは「ほか N 文書と類似」の 1 件の info に集約する(生成文書のように重複が多いコーパスで診断が爆発するのを防ぐ)。ペアは `a < b` の向きだが報告は両側の文書それぞれに付ける — 常に `a` 側になる文書が診断ゼロになるのを防ぐため |
-| `relation/doc-comment-drift` | コメントと文書の内容重複 | `jaio-collect`(tree-sitter)で抽出した日本語コメント本文と文書本文の bigram Jaccard 類似度。閾値以上を重複として報告する(乖離の判定は意味判断が必要なため LLM 委譲とし、決定論的には重複のみ検出する) |
+| `relation/doc-comment-drift` | コメントと文書の内容重複 | `oboro-jaio` の `collect` module(tree-sitter)で抽出した日本語コメント本文と文書本文の bigram Jaccard 類似度。閾値以上を重複として報告する(乖離の判定は意味判断が必要なため LLM 委譲とし、決定論的には重複のみ検出する) |
 | `relation/orphan` | 一切参照されない文書 | リンクグラフの孤立ノード。エントリポイント(`detection.orphan_entry_points`、既定は README.md)とコマンドラインで明示指定したファイルは対象外 |
 | `relation/broken-link` | リンク切れ | 文書内の相対リンクの解決失敗。外部 URL(`http(s)`/`mailto`)・アンカーのみ・絶対パス(`/` 始まり)は対象外。**GitHub の PR/Issue テンプレート(`.github` 配下の文書)の相対リンクは repo ルート基準で解決する**(GitHub のレンダリング挙動に合わせる。.github は必ずルート直下のため `.github` の親を基準にする、#84/#86: テンプレート以外の .github 配下の文書は通常どおりファイル基準)。**画像 `![alt](url)` の相対 URL も実在チェックする**(#74: 画像のリンク切れは可読性の問題のため検証対象に含める。拡張子なし URL への `.md`/`.mdx` 補完は行わない)。URL デコードを行い、拡張子付きリンクはそのまま実在チェック、拡張子なしリンクは `.md`/`.mdx` を補完して判定する(画像は補完しない)。ディレクトリへのリンクは実在すれば有効 |
 | `relation/move-integrity` | 移動宣言のある文書の行単位保全(#56) | `[verification.moves]` で宣言した移動元→移動先ペアについて、`verify-move` と同じ正規化(見出しマーカー除去・リンク簡約・trim)で実質行の**多重集合照合**(同一行は出現回数で判定、#80)を行い、未保全行を warn で報告。移動元が解析対象から消えていれば宣言の残骸として info、移動先が無ければ warn。宣言が空なら対象外 |
@@ -196,8 +196,8 @@ lindera v6 の `Mode` は `Normal` / `Decompose(Penalty)` の 2 種のみで、S
 
 ```rust
 /// 単一ドキュメント内で完結するルール(efficiency / consistency / structure)。
-/// DocContext が jaio-parse の型を参照するため、trait は jaio-rules に置く
-/// (core は jaio-parse に依存しない依存最小 crate であるため)
+/// ルール trait と実装は診断の crate(oboro-jaio の rules module)に置く。
+/// 土台(oboro-ja-core)は規則の実装を持たない(§6.3)
 pub trait DocumentRule: Send + Sync {
     fn id(&self) -> &'static str;
     fn run(&self, ctx: &mut DocContext<'_>) -> anyhow::Result<Vec<Diagnostic>>;
@@ -239,21 +239,58 @@ pub enum Evidence {
 
 ### 6.3 Crate 構成
 
+このリポジトリは、日本語の文章の部品をまとめる workspace `oboro-ja` です。共通の土台の上に診断(jaio)を載せ、単独の CLI を残します。
+
 ```
-jaio/
-├── Cargo.toml               # workspace
+oboro-ja/
+├── Cargo.toml               # workspace(版は全 crate 共通)
 ├── jaio.toml                # 設定(リポジトリルートに配置する運用)
 └── crates/
-    ├── jaio-core/           # 診断モデル・設定(依存最小)
-    ├── jaio-collect/        # ファイル走査(ignore)・コメント抽出(tree-sitter)
-    ├── jaio-parse/          # 文書構造 AST(comrak)・日本語 AST(lindera)
-    ├── jaio-index/          # 転置索引・SimHash・類似度分布
-    ├── jaio-rules/          # ルール trait とルール実装群
-    ├── jaio-report/         # 出力(terminal / json / md / sarif)
-    └── jaio-cli/            # バイナリ(clap)
+    ├── oboro-ja-core/       # 共通の土台
+    ├── oboro-jaio/          # 診断(jaio のルール・索引・出力・コメント抽出)
+    └── jaio-cli/            # 単独の CLI(バイナリ `jaio`、clap)
 ```
 
-依存の流れは一方向(cli → report/rules/index/parse/collect → core)とし、循環を許しません。
+| crate | 役割 | module |
+|---|---|---|
+| `oboro-ja-core` | 共通の土台。診断モデル、設定、文書の読み方(comrak)、日本語の分け方(lindera と辞書)、トークンの数え方(tiktoken)、規則の登録簿 | `config` / `doc` / `ja` / `morph` / `dict` / `tokencount` / `registry` |
+| `oboro-jaio` | 診断。ルール trait と実装、横断索引、出力、コメント抽出。読み取り専用方針(§7.4)は変えません | `rules` / `index` / `report` / `collect` / `comments` |
+| `jaio-cli` | 単独の CLI。走査、設定の読み込み、解析の実行、終了コード | — |
+
+依存の流れは一方向(`jaio-cli → oboro-jaio → oboro-ja-core`)とし、循環を許しません。土台は規則の実装と出力形式を持ちません。
+
+ほかのリポジトリは、土台と診断を git の依存として取り込めます。手順は `README.md`、版の付け方と追随の手順は `docs/release.md` を参照してください。
+
+### 6.4 規則の登録簿
+
+規則 ID の持ち主を 1 つに決めるため、土台に登録簿(`oboro_ja_core::registry::RuleRegistry`)を置きます。
+
+| 項目 | 内容 |
+|---|---|
+| 登録内容 | 規則 ID、持ち主(規則を実装する部品の名前。jaio の規則は `jaio`)、説明 |
+| 1 規則 1 持ち主 | 登録済みの ID を再び登録するとエラーにします。複数の部品を 1 つの実行ファイルへ組み込むときは、同じ登録簿へ順に登録して重なりを検出します |
+| 重さと許可 | `[lint]` の設定(`default` / `rules` / `rule_excludes` / `allow`、§8)で制御します。設定に書かれた規則 ID は登録簿と照合し、未登録の ID を設定エラーにします |
+
+`jaio rules` と `jaio explain` は、登録簿の内容を登録順に表示します。
+
+### 6.5 辞書の取得と検証
+
+形態素解析辞書(SudachiDict、lindera 形式)を実行ファイルに埋め込まないビルドを既定にします。埋め込むのは Cargo feature `embedded-dict` を付けたときだけです。
+
+| ビルド | feature | 辞書 |
+|---|---|---|
+| 既定(軽いビルド) | なし | 実行時に辞書ディレクトリを渡す(`[analysis] dictionary`) |
+| 埋め込み | `embedded-dict` | 実行ファイルに同梱し、辞書の指定がないときに使う |
+
+土台(`oboro_ja_core::dict`)は辞書の在り処を引数で受け取ります。環境変数、cwd、既定の置き場を土台が探すことはなく、置き場は呼ぶ側が決めます。
+
+| 口 | 内容 |
+|---|---|
+| `verify_dir` | 辞書ディレクトリに lindera が読む 9 ファイル(`DICTIONARY_FILES`)が揃っているかを確かめ、内容 fingerprint(`manifest_sha256`)を返す |
+| `verify_archive_sha256` | 配布物(`scripts/package-dict.sh` が作る tar.gz)の SHA-256 を、同梱の `.sha256` の値と照合する |
+| `install_archive` | 配布物を照合してから展開し、辞書ディレクトリとして置く。照合に失敗した配布物と、想定外の項目を含む配布物は置かない |
+
+配布物のダウンロードは呼ぶ側が行います(CLI の利用者は `gh release download`、組み込む側は自前の通信手段)。テストは dev-dependencies で `embedded-dict` を有効にするため、`cargo test` は辞書を使う試験をそのまま実行します。
 
 ## 7. 出力仕様
 
@@ -630,7 +667,8 @@ jaio の診断を LLM エージェントが消費する標準フローを次に�
 [analysis]
 mode = "normal"             # lindera Mode: "normal" | "decompose"
 encoding = "o200k_base"     # トークン計測用エンコーディング
-# dictionary = "/path/to/lindera-sudachidict"  # 外部の lindera 辞書ディレクトリ(Sudachi スキーマ)。未指定なら埋め込み辞書
+# dictionary = "/path/to/lindera-sudachidict"  # 外部の lindera 辞書ディレクトリ(Sudachi スキーマ)。既定の軽いビルドでは必須。
+#                                              # 未指定で使えるのは feature `embedded-dict` のビルドだけ(§6.5)
 
 # 文体(§1.3 の既定規約)。target = "polite"(ですます体)| "plain"(である体)
 [style]
@@ -719,7 +757,7 @@ terms = ["リポジトリ", "レポジトリ"]
 | 領域 | 選択 | 備考 |
 |---|---|---|
 | Markdown 解析 | `comrak` | GFM 対応、MDAST 構造の取得 |
-| 形態素解析 | `lindera`(Sudachi 辞書) | Rust ネイティブ。v6 の `embed-sudachidict` feature で辞書埋め込み・オフライン動作(jaio の Cargo feature `embedded-dict`、既定 on)。`--no-default-features` の軽量ビルドでは `[analysis] dictionary` で外部辞書ディレクトリを実行時ロード(mmap)する。粒度 A/B/C は `Mode` 非提供(§4.2) |
+| 形態素解析 | `lindera`(Sudachi 辞書) | Rust ネイティブ。既定の軽いビルドは `[analysis] dictionary` で外部辞書ディレクトリを実行時ロード(mmap)する。Cargo feature `embedded-dict`(既定 off)を付けると v6 の `embed-sudachidict` で辞書を埋め込み、設定なしでオフライン動作する(§6.5)。粒度 A/B/C は `Mode` 非提供(§4.2) |
 | トークン計測 | `tiktoken-rs` | BPE エンコーディング指定可 |
 | コメント抽出 | `tree-sitter` + 各言語 grammar | ビルド負荷のため feature flag で主要言語から段階提供。Phase 2 では Rust / TypeScript / Python / Go の comment ノード抽出 |
 | ファイル走査 | `ignore` | ripgrep 由来、.gitignore 準拠(`require_git(false)`:`.git` の有無に依らず .gitignore を適用、#58) |
@@ -742,7 +780,7 @@ terms = ["リポジトリ", "レポジトリ"]
 - インクリメンタル解析(mtime + ハッシュによる再解析スキップ)は Phase 3。
   実測ではファイル単位の処理が 500 文書で約 2ms/文書に留まるため、
   永続キャッシュ化より並列化を優先した(Issue #14)
-- 辞書・パターン辞書は `include_str!` / `include_bytes!` で静的アセット化
+- パターン辞書は `include_str!` で静的アセット化。形態素解析辞書を埋め込むのは feature `embedded-dict` のビルドだけ(§6.5)
 - 計測(Issue #18): check 実行のフェーズ別(collect / parse / corpus)所要時間とルール別の診断数・所要時間を `--verbose` で summary に出す。性能の議論を推定から実測に変える
 
 ## 11. ロードマップ
@@ -766,11 +804,11 @@ terms = ["リポジトリ", "レポジトリ"]
 - [x] `jaio rules` / `jaio explain`
 - [x] Markdown リンク抽出とファイル参照集合の構築
 - [x] ルール: `relation/broken-link`、`relation/orphan`
-- [x] `jaio-index` crate の分離(SimHash・n-gram 類似度・テキスト正規化)
+- [x] `jaio-index` crate の分離(SimHash・n-gram 類似度・テキスト正規化。現在は `oboro-jaio` の `index` module、§6.3)
 - [x] SimHash + n-gram による重複検出(小規模コーパスは全ペア検証で擬陰性を回避)
 - [x] 重複位置の特定(最も類似するセクション組を見出し行で報告)
 - [x] ルール: `relation/cross-doc-duplication`、`merge/consolidation-plan`(§5.5)
-- [x] `jaio-collect` crate の分離(tree-sitter によるコメント抽出)
+- [x] `jaio-collect` crate の分離(tree-sitter によるコメント抽出。現在は `oboro-jaio` の `collect` module、§6.3)
 - [x] ルール: `relation/doc-comment-drift`(コメントと文書の重複)
 - [x] ルール: `consistency/terminology`(ペア辞書ベースの用語揺れ、`[terms]` 拡張)
 - [x] ルール: `efficiency/repeated-quote`(同一文の重複出現)
@@ -786,12 +824,18 @@ terms = ["リポジトリ", "レポジトリ"]
 - [x] SARIF 出力
 - [x] LLM 委譲ワークフロー向けの抽出データ整備(JSON スキーマ確定: `docs/schema/report.schema.json`、§7.3)
 
+### Phase 4 — 部品化
+
+- [x] workspace を `oboro-ja` の構成へ組み替え(共通の土台 `oboro-ja-core`、診断 `oboro-jaio`、単独の CLI。§6.3)
+- [x] 規則の登録簿(1 規則 1 持ち主、§6.4)
+- [x] 辞書を埋め込まないビルドの既定化と、辞書の取得と検証の口(§6.5)
+
 ## 12. リスクと緩和策
 
 | リスク | 影響 | 緩和策 |
 |---|---|---|
 | lindera の Sudachi 辞書対応 | Phase 1 の前提 | 検証済み: v6.0 `embed-sudachidict` で利用可。ただし Sudachi 粒度 A/B/C 相当の Mode は無く `Normal`/`Decompose` のみ(§4.2)。粒度の細かい制御が必要なら将来 vibrato 等へ差し替え(分析 trait で吸収) |
-| 埋め込み辞書によるバイナリ肥大(約 600MB、`dict.words` が 400MB) | 配布の障壁 | 既定ビルドは埋め込みのまま(オフライン・設定不要を優先)。配布用は Cargo feature `embedded-dict` を外し、`[analysis] dictionary` で外部辞書(`lindera build` で SudachiDict small/core から作ったものも可)を実行時ロードする。外部辞書は Sudachi スキーマ(素性列の並び)を前提とし、IPADIC 等への切り替えは素性参照とルールの見直しが要るため行わない |
+| 埋め込み辞書によるバイナリ肥大(約 600MB、`dict.words` が 400MB) | 配布と組み込みの障壁 | 既定ビルドは辞書を埋め込まない(§6.5)。`[analysis] dictionary` で外部辞書(`lindera build` で SudachiDict small/core から作ったものも可)を実行時ロードする。オフライン・設定不要を優先する場合だけ Cargo feature `embedded-dict` を付ける。外部辞書は Sudachi スキーマ(素性列の並び)を前提とし、IPADIC 等への切り替えは素性参照とルールの見直しが要るため行わない |
 | tree-sitter grammar のビルド負荷 | 導入障壁 | feature flag で言語を段階提供。コメント抽出のみなら簡易パーサ(`//` `#` `/* */`)へのフォールバックも保持 |
 | SimHash の誤検出 | 統合提案の信頼低下 | しきい値を設定可能にし、`evidence` に根拠(スコア・一致位置)を必ず出す。最終判断は LLM/人間 |
 | NFKC 正規化による過剰検出 | 揺れ検出の誤報 | 表記比較は NFC、全角半角統一は明示的ルールでのみ実施 |
