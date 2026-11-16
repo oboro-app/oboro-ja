@@ -1,15 +1,37 @@
 //! 実出力と指標オブジェクトを docs/schema/report.schema.json で検証する(#32)。
 //! 手書きのキー検査ではなく、正本スキーマそのものをコンパイルして使う。
+//! 入口 crate の SCHEMA とも照合する(#9)。
 
 use std::process::Command;
 
 fn load_schema() -> serde_json::Value {
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../docs/schema/report.schema.json"
-    );
-    let text = std::fs::read_to_string(path).expect("スキーマが読めるはず");
-    serde_json::from_str(&text).expect("スキーマ自体が JSON として正しいはず")
+    // 入口が公開する SCHEMA を正とする(#9)。docs/ のファイルと同一本文
+    serde_json::from_str(oboro_ja::SCHEMA).expect("SCHEMA 自体が JSON として正しいはず")
+}
+
+/// CLI の JSON が入口の SCHEMA に適合する(#9)
+#[test]
+fn cli_json_validates_against_entry_schema() {
+    let dir = std::env::temp_dir().join(format!("jaio-entry-schema-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("a.md"),
+        "# 題名\n\n検査手順は最初に対象を洗い出します。\n",
+    )
+    .unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_jaio"))
+        .args(["check", "--format", "json"])
+        .arg(&dir)
+        .output()
+        .unwrap();
+    let report: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("JSON が出力されるはず");
+
+    let schema = load_schema();
+    let validator = jsonschema::validator_for(&schema).expect("SCHEMA がコンパイルできるはず");
+    assert_valid(&validator, &report);
+    std::fs::remove_dir_all(&dir).ok();
 }
 
 /// 名前を指定して docs/schema/ のスキーマを読む(#61: stats / verify-move /

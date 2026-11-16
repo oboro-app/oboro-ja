@@ -4,6 +4,7 @@ use crate::morph::Morph;
 
 /// 文体の分類。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum SentenceStyle {
     /// ですます体(敬体)
     Polite,

@@ -164,6 +164,7 @@ fn status_name(status: MeasurementStatus) -> &'static str {
         MeasurementStatus::NotApplicable => "not_applicable",
         MeasurementStatus::InsufficientSample => "insufficient_sample",
         MeasurementStatus::Unavailable => "unavailable",
+        _ => "unavailable",
     }
 }
 
@@ -465,6 +466,7 @@ fn sarif_level(severity: Severity) -> &'static str {
         Severity::Error => "error",
         Severity::Warn => "warning",
         Severity::Info => "note",
+        _ => "note",
     }
 }
 
@@ -527,6 +529,7 @@ fn severity_color(severity: Severity) -> &'static str {
         Severity::Error => "31",
         Severity::Warn => "33",
         Severity::Info => "36",
+        _ => "36",
     }
 }
 

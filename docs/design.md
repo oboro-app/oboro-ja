@@ -239,7 +239,7 @@ pub enum Evidence {
 
 ### 6.3 Crate 構成
 
-このリポジトリは、日本語の文章の部品をまとめる workspace `oboro-ja` です。共通の土台の上に診断(jaio)を載せ、単独の CLI を残します。
+このリポジトリは、日本語の文章の部品をまとめる workspace `oboro-ja` です。共通の土台の上に診断(jaio)を載せ、組み込み用の入口と単独の CLI を残します。
 
 ```
 oboro-ja/
@@ -248,6 +248,7 @@ oboro-ja/
 └── crates/
     ├── oboro-ja-core/       # 共通の土台
     ├── oboro-jaio/          # 診断(jaio のルール・索引・出力・コメント抽出)
+    ├── oboro-ja/            # 入口(JSON 出力・SCHEMA。組み込み側が依存する唯一の crate)
     └── jaio-cli/            # 単独の CLI(バイナリ `jaio`、clap)
 ```
 
@@ -255,11 +256,12 @@ oboro-ja/
 |---|---|---|
 | `oboro-ja-core` | 共通の土台。診断モデル、設定、文書の読み方(comrak)、日本語の分け方(lindera と辞書)、トークンの数え方(tiktoken)、規則の登録簿 | `config` / `doc` / `ja` / `morph` / `dict` / `tokencount` / `registry` |
 | `oboro-jaio` | 診断。ルール trait と実装、横断索引、出力、コメント抽出。読み取り専用方針(§7.4)は変えません | `rules` / `index` / `report` / `collect` / `comments` |
-| `jaio-cli` | 単独の CLI。走査、設定の読み込み、解析の実行、終了コード | — |
+| `oboro-ja` | 入口。ほかの実行ファイルへ組み込むときの唯一の依存先。`--format json` の直列化と `docs/schema/` の文字列 `SCHEMA` を公開します。運用の概念は持ちません | `json` |
+| `jaio-cli` | 単独の CLI。走査、設定の読み込み、解析の実行、終了コード。JSON 出力は入口を通します | — |
 
-依存の流れは一方向(`jaio-cli → oboro-jaio → oboro-ja-core`)とし、循環を許しません。土台は規則の実装と出力形式を持ちません。
+依存の流れは一方向(`jaio-cli → oboro-ja → oboro-jaio → oboro-ja-core`)とし、循環を許しません。土台は規則の実装と出力形式を持ちません。入口の外へ出す enum には `#[non_exhaustive]` を付け、後から変種を足せるようにします。
 
-ほかのリポジトリは、土台と診断を git の依存として取り込めます。手順は `README.md`、版の付け方と追随の手順は `docs/release.md` を参照してください。
+ほかのリポジトリは、入口 crate を git の tag で 1 つだけ依存に入れます。手順は `README.md`、版の付け方と追随の手順は `docs/release.md` を参照してください。
 
 ### 6.4 規則の登録簿
 
@@ -829,6 +831,7 @@ terms = ["リポジトリ", "レポジトリ"]
 - [x] workspace を `oboro-ja` の構成へ組み替え(共通の土台 `oboro-ja-core`、診断 `oboro-jaio`、単独の CLI。§6.3)
 - [x] 規則の登録簿(1 規則 1 持ち主、§6.4)
 - [x] 辞書を埋め込まないビルドの既定化と、辞書の取得と検証の口(§6.5)
+- [x] 入口 crate(`oboro-ja`)で JSON 出力と `SCHEMA` を公開する(§6.3、#9)
 
 ## 12. リスクと緩和策
 

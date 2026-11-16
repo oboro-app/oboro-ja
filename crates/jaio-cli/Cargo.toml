@@ -13,6 +13,7 @@ workspace = true
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 ignore = "0.4"
+oboro-ja = { path = "../oboro-ja" }
 oboro-ja-core = { path = "../oboro-ja-core" }
 oboro-jaio = { path = "../oboro-jaio" }
 rayon = "1.12.0"
@@ -23,7 +24,11 @@ sha2 = "0.10"
 # 既定は辞書を埋め込まない軽いビルド(設計書 §6.5)。check / stats / dump は
 # jaio.toml の [analysis] dictionary で辞書ディレクトリを受け取る
 default = []
-embedded-dict = ["oboro-jaio/embedded-dict", "oboro-ja-core/embedded-dict"]
+embedded-dict = [
+    "oboro-ja/embedded-dict",
+    "oboro-jaio/embedded-dict",
+    "oboro-ja-core/embedded-dict",
+]
 
 [[bin]]
 name = "jaio"

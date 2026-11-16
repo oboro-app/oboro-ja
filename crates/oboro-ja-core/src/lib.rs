@@ -21,6 +21,7 @@ use std::fmt;
 /// 診断の重大度。rustc の warn/deny 文化に倣う(設計書 §5)。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum Severity {
     /// error: deny 相当。exit code 1 の原因になる
     Error,
@@ -53,6 +54,7 @@ pub struct Span {
 /// 計測値の状態(設計書 §7.3)。未計測を 0 で埋めないための区別。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum MeasurementStatus {
     /// 計測済み(value を出力する)
     Measured,
