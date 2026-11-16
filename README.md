@@ -6,6 +6,7 @@
 |---|---|
 | `oboro-ja-core` | 共通の土台。文書の読み方(Markdown)、日本語の分け方(形態素解析と辞書)、トークンの数え方、規則の登録簿 |
 | `oboro-jaio` | 診断。jaio のルール、横断索引、出力、コメント抽出 |
+| `oboro-ja` | 入口。組み込み側が依存する唯一の crate。JSON 出力と `SCHEMA` を公開します |
 | `jaio-cli` | 単独の CLI(バイナリ `jaio`) |
 
 crate の構成と依存の向きは [docs/design.md](docs/design.md) §6.3 を参照してください。
@@ -238,23 +239,20 @@ consolidation-plan を定期監視(新規複製の検知)に使う運用がで�
 
 ## crate として取り込む
 
-土台(`oboro-ja-core`)と診断(`oboro-jaio`)は、ほかのリポジトリから git の依存として取り込めます。公開リポジトリなので認証は要りません。
+ほかのリポジトリからは、入口 crate(`oboro-ja`)だけを git の tag で依存に入れます。公開リポジトリなので認証は要りません。
 
 ```toml
 [dependencies]
-oboro-ja-core = { git = "https://github.com/oboro-app/oboro-ja", tag = "v<version>" }
-oboro-jaio = { git = "https://github.com/oboro-app/oboro-ja", tag = "v<version>" }
+oboro-ja = { git = "https://github.com/oboro-app/oboro-ja", tag = "v<version>", default-features = false }
 ```
 
 ```rust
-use oboro_ja_core::doc::Doc;
-use oboro_ja_core::tokencount::TokenCounter;
+use oboro_ja::{SCHEMA, json};
 
 fn main() -> anyhow::Result<()> {
-    let source = "# 見出し\n\n本文です。\n".to_string();
-    let (doc, leaves, headings) = Doc::parse("sample.md".into(), source);
-    let tokens = TokenCounter::new()?.count(&doc.source);
-    println!("{} leaves, {} headings, {tokens} tokens", leaves.len(), headings.len());
+    // SCHEMA は docs/schema/report.schema.json の本文。出力の照合に使う
+    assert!(SCHEMA.contains("schema_version"));
+    let _ = json::SCHEMA_VERSION;
     Ok(())
 }
 ```
@@ -262,7 +260,7 @@ fn main() -> anyhow::Result<()> {
 | 項目 | 内容 |
 |---|---|
 | 版の固定 | `tag` で固定します。`Cargo.lock` が commit を記録します。版の付け方と追随の手順は [docs/release.md](docs/release.md) を参照してください |
-| 辞書 | 既定では埋め込みません。形態素解析を使うときは、辞書ディレクトリの path を `oboro_ja_core::morph::Analyzer::with_options` に渡します。配布物の照合と展開は `oboro_ja_core::dict` が担います |
+| 辞書 | 既定では埋め込みません(`default-features = false` で軽いビルド)。形態素解析を使うときは辞書ディレクトリの path を渡します |
 | 辞書の埋め込み | `features = ["embedded-dict"]` を付けます(バイナリが約 600MB になります) |
 | 非公開の fork やミラー | cargo 組み込みの git 取得が認証に失敗するときは、`CARGO_NET_GIT_FETCH_WITH_CLI=true`(または `.cargo/config.toml` の `[net] git-fetch-with-cli = true`)を設定し、手元の git コマンドの認証を使います |
 

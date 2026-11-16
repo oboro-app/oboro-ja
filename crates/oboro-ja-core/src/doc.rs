@@ -29,6 +29,7 @@ pub struct Doc {
 
 /// テキストリーフの種別。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum LeafKind {
     /// 見出し
     Heading,
@@ -72,6 +73,7 @@ pub struct Heading {
 /// Markdown 内のリンク種別。リンクと画像で扱いが異なるため区別する(#74):
 /// 両方とも broken-link の実在検証に使うが、被リンク集計はリンクのみ
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum LinkKind {
     /// `[text](url)` 形式のリンク
     Link,

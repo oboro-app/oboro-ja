@@ -161,6 +161,7 @@ pub fn run_stats(
             let encoding = match config.analysis.encoding {
                 TokenEncoding::O200kBase => "o200k_base",
                 TokenEncoding::Cl100kBase => "cl100k_base",
+                _ => "unknown",
             };
             algorithms.insert(
                 "tokenizer".to_string(),

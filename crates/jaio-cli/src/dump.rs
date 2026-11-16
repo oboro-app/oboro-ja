@@ -8,6 +8,7 @@ pub(crate) fn leaf_kind_name(kind: oboro_ja_core::doc::LeafKind) -> &'static str
         LeafKind::Paragraph => "paragraph",
         LeafKind::ListItem => "list_item",
         LeafKind::TableCell => "table_cell",
+        _ => "unknown",
     }
 }
 
