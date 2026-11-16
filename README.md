@@ -1,6 +1,18 @@
-# jaio
+# oboro-ja
 
-リポジトリ内の日本語文書を静的解析し、**人間の可読性**と **AI のトークン効率**の両面から冗長性・揺れを検出する Rust 製 CLI ツールです。
+日本語の文章を扱う部品をまとめた Rust の workspace です。共通の土台の上に、文書の診断ツール jaio を載せています。
+
+| crate | 役割 |
+|---|---|
+| `oboro-ja-core` | 共通の土台。文書の読み方(Markdown)、日本語の分け方(形態素解析と辞書)、トークンの数え方、規則の登録簿 |
+| `oboro-jaio` | 診断。jaio のルール、横断索引、出力、コメント抽出 |
+| `jaio-cli` | 単独の CLI(バイナリ `jaio`) |
+
+crate の構成と依存の向きは [docs/design.md](docs/design.md) §6.3 を参照してください。
+
+## jaio
+
+jaio は、リポジトリ内の日本語文書を静的解析し、**人間の可読性**と **AI のトークン効率**の両面から冗長性・揺れを検出する Rust 製 CLI ツールです。
 
 「文書版 clippy」を目指します。診断は Rust の linter 文化(warn/deny、rule ID)に倣い、観察・計測値・位置根拠・確認事項・限界を分離して報告します。文書の編集は行いません(読み取り専用、設計書 §7.4)。
 
@@ -8,23 +20,25 @@
 
 ## 使い方
 
+既定のビルドは形態素解析辞書を埋め込みません(「ビルドと辞書の選択」)。手元で試すときは、辞書を埋め込む `--features embedded-dict` を付けるか、`jaio.toml` の `[analysis] dictionary` に辞書ディレクトリを指定します。
+
 ```sh
-cargo run -p jaio-cli -- check docs/            # ドキュメントを解析して診断を報告
-cargo run -p jaio-cli -- check docs/ --format json  # JSON 出力(LLM 委譲向け、§7.3)
+cargo run -p jaio-cli --features embedded-dict -- check docs/            # ドキュメントを解析して診断を報告
+cargo run -p jaio-cli --features embedded-dict -- check docs/ --format json  # JSON 出力(LLM 委譲向け、§7.3)
 #   JSON の構造は docs/schema/report.schema.json(schema_version で互換性管理)
-cargo run -p jaio-cli -- check docs/ --verbose  # フェーズ別・ルール別の処理時間など内部計測を表示
-cargo run -p jaio-cli -- stats docs/            # トークン統計を表示
-cargo run -p jaio-cli -- stats docs/ --format json  # トークン統計の JSON 出力(層別集計の自動化向け、#50)
-cargo run -p jaio-cli -- stats docs/ --similarity  # 文書ペアの類似度分布(重複閾値の調整用)
-cargo run -p jaio-cli -- dump doc <file>        # 文書構造 AST(leaf・heading・links)を JSON でダンプ
-cargo run -p jaio-cli -- dump morph <file>      # 形態素解析結果を JSON でダンプ
-cargo run -p jaio-cli -- dump corpus docs/      # 文書別統計・重複ペア等を JSON でダンプ(重複調査・層別分析の材料)
-cargo run -p jaio-cli -- verify-move OLD.md NEW.md  # 文書移動の lossless 検証(行単位保全、#51)
-cargo run -p jaio-cli -- rules                  # ルール一覧
-cargo run -p jaio-cli -- explain <RULE_ID>      # ルールの詳細
+cargo run -p jaio-cli --features embedded-dict -- check docs/ --verbose  # フェーズ別・ルール別の処理時間など内部計測を表示
+cargo run -p jaio-cli --features embedded-dict -- stats docs/            # トークン統計を表示
+cargo run -p jaio-cli --features embedded-dict -- stats docs/ --format json  # トークン統計の JSON 出力(層別集計の自動化向け、#50)
+cargo run -p jaio-cli --features embedded-dict -- stats docs/ --similarity  # 文書ペアの類似度分布(重複閾値の調整用)
+cargo run -p jaio-cli --features embedded-dict -- dump doc <file>        # 文書構造 AST(leaf・heading・links)を JSON でダンプ
+cargo run -p jaio-cli --features embedded-dict -- dump morph <file>      # 形態素解析結果を JSON でダンプ
+cargo run -p jaio-cli --features embedded-dict -- dump corpus docs/      # 文書別統計・重複ペア等を JSON でダンプ(重複調査・層別分析の材料)
+cargo run -p jaio-cli --features embedded-dict -- verify-move OLD.md NEW.md  # 文書移動の lossless 検証(行単位保全、#51)
+cargo run -p jaio-cli --features embedded-dict -- rules                  # ルール一覧
+cargo run -p jaio-cli --features embedded-dict -- explain <RULE_ID>      # ルールの詳細
 ```
 
-既定ビルドは Sudachi 辞書を埋め込むためバイナリが約 600MB になります。配布用には `cargo build -p jaio-cli --release --no-default-features` で軽量ビルド(約 15MB)を作り、`jaio.toml` の `[analysis] dictionary` に lindera 辞書ディレクトリを指定して実行時ロードします(設計書 §12)。
+`--features embedded-dict` のビルドは Sudachi 辞書を埋め込むため、バイナリが約 600MB になります。既定のビルド(`cargo build -p jaio-cli --release`、約 15MB)は辞書を埋め込まず、`jaio.toml` の `[analysis] dictionary` に指定した lindera 辞書ディレクトリを実行時にロードします(設計書 §6.5)。
 
 ## リリース
 
@@ -222,15 +236,44 @@ orphan として報告されます。次のいずれかを選択します:
 「model 記述だけがハーネス別に異なる管理された複製」のように維持を決めたものは、
 consolidation-plan を定期監視(新規複製の検知)に使う運用ができます。
 
+## crate として取り込む
+
+土台(`oboro-ja-core`)と診断(`oboro-jaio`)は、ほかのリポジトリから git の依存として取り込めます。公開リポジトリなので認証は要りません。
+
+```toml
+[dependencies]
+oboro-ja-core = { git = "https://github.com/oboro-app/oboro-ja", tag = "v<version>" }
+oboro-jaio = { git = "https://github.com/oboro-app/oboro-ja", tag = "v<version>" }
+```
+
+```rust
+use oboro_ja_core::doc::Doc;
+use oboro_ja_core::tokencount::TokenCounter;
+
+fn main() -> anyhow::Result<()> {
+    let source = "# 見出し\n\n本文です。\n".to_string();
+    let (doc, leaves, headings) = Doc::parse("sample.md".into(), source);
+    let tokens = TokenCounter::new()?.count(&doc.source);
+    println!("{} leaves, {} headings, {tokens} tokens", leaves.len(), headings.len());
+    Ok(())
+}
+```
+
+| 項目 | 内容 |
+|---|---|
+| 版の固定 | `tag` で固定します。`Cargo.lock` が commit を記録します。版の付け方と追随の手順は [docs/release.md](docs/release.md) を参照してください |
+| 辞書 | 既定では埋め込みません。形態素解析を使うときは、辞書ディレクトリの path を `oboro_ja_core::morph::Analyzer::with_options` に渡します。配布物の照合と展開は `oboro_ja_core::dict` が担います |
+| 辞書の埋め込み | `features = ["embedded-dict"]` を付けます(バイナリが約 600MB になります) |
+| 非公開の fork やミラー | cargo 組み込みの git 取得が認証に失敗するときは、`CARGO_NET_GIT_FETCH_WITH_CLI=true`(または `.cargo/config.toml` の `[net] git-fetch-with-cli = true`)を設定し、手元の git コマンドの認証を使います |
+
 ## ビルドと辞書の選択
 
 | ビルド | バイナリサイズ | 初回起動 | 辞書 |
 |---|---|---|---|
-| 既定(`cargo build --release`) | 約 584MB | コールドで約 30 秒(ページイン) | SudachiDict 埋め込み |
-| `--no-default-features` | **約 15MB** | 一瞬 | 外部辞書(`[analysis] dictionary`) |
+| 既定(`cargo build --release`) | **約 15MB** | 一瞬 | 外部辞書(`[analysis] dictionary`) |
+| `--features embedded-dict` | 約 584MB | コールドで約 30 秒(ページイン) | SudachiDict 埋め込み |
 
-小さい配布物や高速起動が必要な場合は `--no-default-features` でビルドし、
-`jaio.toml` で辞書ディレクトリを指定します:
+既定のビルドでは、`jaio.toml` で辞書ディレクトリを指定します:
 
 ```toml
 [analysis]
@@ -253,7 +296,7 @@ dictionary = "/path/to/lindera-sudachidict"
 [GitHub Releases](https://github.com/oboro-app/oboro-ja/releases) から取得できます
 (`gh release download -R oboro-app/oboro-ja`)。リリース運用の詳細は
 [docs/release.md](docs/release.md) を参照してください。
-なお `--no-default-features` ビルドは形態素解析を省略できるものではなく、
+なお既定のビルドは形態素解析を省略できるものではなく、
 `check`/`stats`/`dump` の実行には `[analysis] dictionary` が必須です
 (辞書なしで動くのは `rules`/`explain` のみ)。
 
@@ -297,12 +340,6 @@ notation-variant の比較対象から外れる)。
 ライセンス: SudachiDict は Apache License 2.0 で再配布可能です
 (ライセンス条文と Works Applications の著作権表示の同梱が条件)。
 辞書 tar.gz や辞書同梱バイナリを配布する場合はライセンス文を同梱してください。
-
-## ライセンス
-
-本リポジトリは非公開で、**自社ライセンス**の下で利用します(`Cargo.toml` は `UNLICENSED`)。
-自社ライセンスの条文は別途定めるものとし、必要になった時点で `LICENSE` ファイルとして配置します。
-公開する場合は SPDX ライセンスを選定し直します。
 
 ## ライセンス
 

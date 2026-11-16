@@ -30,7 +30,7 @@
 ./scripts/setup.sh
 
 # --- 開発 ---
-cargo run -p jaio-cli                     # CLI 実行
+cargo run -p jaio-cli --features embedded-dict   # CLI 実行(辞書を埋め込む。既定は辞書なしの軽いビルド)
 cargo build --workspace                   # ビルド
 
 # --- Lint・型チェック ---
@@ -78,13 +78,9 @@ jaio/
 │   ├── README.md           # ドキュメント読み順・規約
 │   └── design.md           # 設計の正本
 ├── crates/
-│   ├── jaio-core/          # 診断モデル・設定・ルール trait(依存最小)
-│   ├── jaio-collect/       # ファイル走査・コメント抽出(Phase 2 で追加)
-│   ├── jaio-parse/         # 文書構造 AST・日本語 AST(Phase 1 で追加)
-│   ├── jaio-index/         # 転置索引・SimHash・リンクグラフ(Phase 2 で追加)
-│   ├── jaio-rules/         # ルール実装群(Phase 1 で追加)
-│   ├── jaio-report/        # 出力 terminal / json / md / sarif(Phase 1 で追加)
-│   └── jaio-cli/           # バイナリ(clap)
+│   ├── oboro-ja-core/      # 共通の土台(診断モデル・設定・文書の読み方・日本語の分け方・トークン計測・規則の登録簿)
+│   ├── oboro-jaio/         # 診断(rules / index / report / collect / comments の module)
+│   └── jaio-cli/           # 単独の CLI(バイナリ jaio、clap)
 ├── scripts/
 │   ├── check-all.sh        # 品質ゲート一括実行
 │   └── setup.sh            # 初回セットアップ
@@ -94,7 +90,7 @@ jaio/
 └── logs/                   # ログ置き場(git 管理外)
 ```
 
-依存の方向は一方向のみ(`設計書 §6.3`): `cli → report/rules/index/parse/collect → core`。
+依存の方向は一方向のみ(`設計書 §6.3`): `jaio-cli → oboro-jaio → oboro-ja-core`。
 循環依存を許さない。crate 追加時はこの構成に従う。
 
 ## コーディング規約
@@ -104,7 +100,7 @@ jaio/
 - **文字列・パス処理の注意**(実装レビュー #66〜#68/#73/#76/#79 の教訓):
   Markdown 構文(リンク・見出し・コード)を扱う処理は comrak の構文範囲
   (sourcepos)に限定し、生テキストへの正規化を書かない。パターン照合
-  (gitignore 構文)とパス解決は `jaio_core::relativize_for_match`
+  (gitignore 構文)とパス解決は `oboro_ja_core::relativize_for_match`
   (jaio.toml 基準 → cwd の多段相対化)を使い、cwd 単独基準を書かない
 - **フォーマット**: `cargo fmt`(`rustfmt.toml` の `style_edition = "2024"`)を正とする。
   エディタや他ツールの import 自動整理に任せず、コミット前に `cargo fmt --all` を通す
