@@ -78,4 +78,4 @@ Keep the checks in force and each deviation from the baseline with its reason in
 | Format | `cargo fmt` with `rustfmt.toml` (`style_edition = "2024"`) is the source of truth |
 | Lint | `clippy --workspace --all-targets -- -D warnings`; warnings are never committed |
 | Repo checks | `scripts/check-all.sh` steps 4-6: jaio self-application on this repo's own documents, script syntax checks, and the `.github/workflows` ban |
-| Known runtime shapes | Markdown syntax handling that left comrak's sourcepos; path matching that did not go through `jaio_core::relativize_for_match` (see AGENTS.md, 文字列とパスの処理) |
+| Known runtime shapes | Markdown syntax handling that left comrak's sourcepos; path matching that did not go through `oboro_ja_core::relativize_for_match` (see AGENTS.md, 文字列とパスの処理) |

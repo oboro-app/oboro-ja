@@ -50,7 +50,7 @@ Then relation/broken-link の診断が docs/guide.md のリンク行で報告さ
 And 終了コードは診断の重大度に従う
 ​```
 
-- 自動: crates/jaio-rules/tests/rules.rs
+- 自動: crates/oboro-jaio/tests/rules.rs
 - 手動: なし(JSON 出力は schema テストで検証)
 ```
 
