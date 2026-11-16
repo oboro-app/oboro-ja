@@ -14,6 +14,7 @@ use oboro_ja_core::config::Config;
 use oboro_ja_core::config::StyleOverrides;
 use oboro_ja_core::doc::{Doc, Heading, LeafKind, TextLeaf};
 use oboro_ja_core::morph::{Analyzer, Morph};
+use oboro_ja_core::registry::{RuleEntry, RuleRegistry};
 use oboro_ja_core::tokencount::TokenCounter;
 use oboro_ja_core::{Diagnostic, Span};
 
@@ -478,9 +479,48 @@ pub fn default_corpus_rules(
     ]
 }
 
+/// jaio の規則の持ち主名(設計書 §6.4)。
+pub const RULE_OWNER: &str = "jaio";
+
+/// jaio の全規則を登録簿へ登録する(Document ルール → Corpus ルールの順、
+/// 設計書 §6.4)。登録簿に同じ ID が登録済みならエラーになる(1 規則 1 持ち主)
+pub fn register_rules(registry: &mut RuleRegistry) -> Result<()> {
+    let config = Config::default();
+    let document = default_rules(&config);
+    let corpus = default_corpus_rules(&config, &[]);
+    let rules = document
+        .iter()
+        .map(|rule| (rule.id(), rule.description()))
+        .chain(corpus.iter().map(|rule| (rule.id(), rule.description())));
+    for (id, description) in rules {
+        registry.register(RuleEntry {
+            id,
+            owner: RULE_OWNER,
+            description,
+        })?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// 全規則が jaio を持ち主として 1 度ずつ登録される(設計書 §6.4)
+    #[test]
+    fn register_rules_registers_every_rule_once_under_jaio() -> Result<()> {
+        let mut registry = RuleRegistry::new();
+        register_rules(&mut registry)?;
+        let config = Config::default();
+        let expected = default_rules(&config).len() + default_corpus_rules(&config, &[]).len();
+        assert_eq!(registry.entries().len(), expected);
+        assert!(registry.entries().iter().all(|e| e.owner == RULE_OWNER));
+        // 登録順は Document ルール → Corpus ルール(`jaio rules` の表示順)
+        assert_eq!(registry.entries()[0].id, default_rules(&config)[0].id());
+        // 同じ登録簿へ 2 度目の登録はできない(1 規則 1 持ち主)
+        assert!(register_rules(&mut registry).is_err());
+        Ok(())
+    }
 
     #[test]
     fn count_excluding_preferred_is_symmetric_for_reversed_pairs() {

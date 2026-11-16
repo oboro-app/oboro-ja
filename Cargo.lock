@@ -1304,11 +1304,15 @@ version = "0.9.4"
 dependencies = [
  "anyhow",
  "comrak",
+ "flate2",
  "ignore",
  "lindera",
  "lindera-sudachidict",
+ "oboro-ja-core",
  "serde",
  "serde_json",
+ "sha2",
+ "tar",
  "tiktoken-rs",
  "toml",
 ]

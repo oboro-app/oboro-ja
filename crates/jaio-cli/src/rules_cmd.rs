@@ -1,39 +1,26 @@
 use super::*;
 
-/// 実装済みルール ID の一覧(lint.rules の typo 検出用、#36)
-pub(crate) fn known_rule_ids() -> Vec<&'static str> {
-    let config = Config::default();
-    default_rules(&config)
-        .iter()
-        .map(|r| r.id())
-        .chain(default_corpus_rules(&config, &[]).iter().map(|r| r.id()))
-        .collect()
+/// jaio の規則を登録した登録簿を作る(設計書 §6.4)
+pub(crate) fn rule_registry() -> Result<RuleRegistry> {
+    let mut registry = RuleRegistry::new();
+    register_rules(&mut registry)?;
+    Ok(registry)
 }
 
 /// ルールの一覧を表示する(`jaio rules`)。
 pub fn list_rules(out: &mut impl Write) -> Result<()> {
-    for rule in default_rules(&Config::default()) {
-        writeln!(out, "{}\t{}", rule.id(), rule.description())?;
-    }
-    for rule in default_corpus_rules(&Config::default(), &[]) {
-        writeln!(out, "{}\t{}", rule.id(), rule.description())?;
+    for entry in rule_registry()?.entries() {
+        writeln!(out, "{}\t{}", entry.id, entry.description)?;
     }
     Ok(())
 }
 
 /// ルールの詳細を表示する(`jaio explain <RULE_ID>`)。
 pub fn explain_rule(rule_id: &str, out: &mut impl Write) -> Result<()> {
-    for rule in default_rules(&Config::default()) {
-        if rule.id() == rule_id {
-            writeln!(out, "{}\t{}", rule.id(), rule.description())?;
-            return Ok(());
-        }
-    }
-    for rule in default_corpus_rules(&Config::default(), &[]) {
-        if rule.id() == rule_id {
-            writeln!(out, "{}\t{}", rule.id(), rule.description())?;
-            return Ok(());
-        }
-    }
-    anyhow::bail!("不明なルール ID です: {rule_id}(jaio rules で一覧を確認してください)")
+    let registry = rule_registry()?;
+    let Some(entry) = registry.get(rule_id) else {
+        anyhow::bail!("不明なルール ID です: {rule_id}(jaio rules で一覧を確認してください)")
+    };
+    writeln!(out, "{}\t{}", entry.id, entry.description)?;
+    Ok(())
 }

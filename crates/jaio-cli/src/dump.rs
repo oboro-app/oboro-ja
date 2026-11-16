@@ -506,7 +506,7 @@ mod dump_tests {
         let dir = std::env::temp_dir().join("jaio-dict-ident-test");
         let dict = dir.join("dict");
         fs::create_dir_all(&dict)?;
-        for name in oboro_ja_core::morph::DICTIONARY_FILES {
+        for name in oboro_ja_core::dict::DICTIONARY_FILES {
             fs::write(dict.join(name), format!("seed-{name}"))?;
         }
         let spec = format!("file://{}", dict.display());

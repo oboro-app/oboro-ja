@@ -74,17 +74,17 @@ fi
 echo "== [1/5] 品質ゲート =="
 ./scripts/check-all.sh
 
-# 辞書成果物の確保(embedded ビルドが必要)
+# 辞書成果物の確保(embedded ビルドが必要。既定のビルドは辞書を作らない)
 echo "== [2/5] 辞書成果物の生成 =="
-cargo build --release --workspace -q
+cargo build --release -p jaio-cli --features embedded-dict -q
 DICT_DIR=$(ls -d target/release/build/lindera-sudachidict-*/out/lindera-sudachidict 2>/dev/null | head -1)
 if [ -z "$DICT_DIR" ]; then
     echo "warning: 辞書成果物が見つかりません。辞書なしバイナリのみリリースします。" >&2
 fi
 
-# リリースバイナリのビルド
+# リリースバイナリのビルド(既定 = 辞書を埋め込まない軽いビルド)
 echo "== [3/5] リリースビルド =="
-cargo build --release --workspace --no-default-features -q
+cargo build --release -p jaio-cli -q
 BIN="target/release/jaio"
 [ -x "$BIN" ] || { echo "error: バイナリが生成されていません" >&2; exit 2; }
 
@@ -121,7 +121,7 @@ fi
 # 辞書同梱版(--with-dict)
 if [ -n "$WITH_DICT" ]; then
     FULL_TAR="jaio-full-v${VERSION}-${OS_ARCH}.tar.gz"
-    cargo build --release --workspace -q
+    cargo build --release -p jaio-cli --features embedded-dict -q
     tar -czf "${TAR_DIR}/${FULL_TAR}" -C target/release jaio
     echo "フル版: ${TAR_DIR}/${FULL_TAR} ($(du -h "${TAR_DIR}/${FULL_TAR}" | cut -f1))"
     ASSETS="${ASSETS} ${TAR_DIR}/${FULL_TAR}"
