@@ -695,7 +695,7 @@ default = "warn"
 # 違い、対象外のパスには通常どおり報告される。照合は jaio.toml 配置ディレクトリ
 # 基準の相対パス(#76)
 [lint.rule_excludes]
-"structure/empty-section" = [".opencode/commands/**"]
+"structure/empty-section" = ["examples/template.md"]
 
 # 意図的な揺れの許容
 [lint.allow]

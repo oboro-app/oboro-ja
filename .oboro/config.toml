@@ -1,0 +1,9 @@
+# この repo 固有の設定(oboro の生成 harness にはコピーしない)
+slots = 4
+
+# oboro の merge 時チェック。品質ゲート(check-all.sh)の検査部分と同じ
+# fmt + clippy + test(人間の指示、Issue #3)。jaio 自己適用と CI 禁止
+# ガードは pre-push と release.sh 側で走る
+[ci]
+runner = "local"
+command = "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace"
