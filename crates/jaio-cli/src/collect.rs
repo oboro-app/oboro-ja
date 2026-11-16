@@ -1,7 +1,7 @@
 use super::*;
 
 /// 診断の表示用パスを正規化する。`.` / `..` セグメントの解決は
-/// `jaio_rules::normalize_path` に委譲し、ここでは表示用の整形だけを行う。
+/// `oboro_jaio::rules::normalize_path` に委譲し、ここでは表示用の整形だけを行う。
 /// 絶対パスはカレントディレクトリ配下なら相対パスへ寄せ、それ以外はそのまま返す。
 pub(crate) fn normalize_display(path: &Path) -> String {
     if path.is_absolute() {
@@ -78,15 +78,15 @@ pub(crate) fn collect_source_files(
     config: &Config,
 ) -> Result<(Vec<PathBuf>, Vec<JsonOperationalError>)> {
     for lang in &config.comments.languages {
-        if !jaio_collect::SUPPORTED_LANGUAGES.contains(&lang.as_str()) {
+        if !oboro_jaio::collect::SUPPORTED_LANGUAGES.contains(&lang.as_str()) {
             anyhow::bail!(
                 "comments.languages に未対応の言語があります: {lang}(対応: {})",
-                jaio_collect::SUPPORTED_LANGUAGES.join(", ")
+                oboro_jaio::collect::SUPPORTED_LANGUAGES.join(", ")
             );
         }
     }
     collect_files_reporting(paths, config, |path| {
-        jaio_collect::language_name(path).is_some_and(|name| {
+        oboro_jaio::collect::language_name(path).is_some_and(|name| {
             config.comments.languages.is_empty()
                 || config.comments.languages.iter().any(|l| l == name)
         })
@@ -240,7 +240,7 @@ pub(crate) fn collect_comment_files(
                 continue;
             }
         };
-        let raw_comments = match jaio_collect::extract_comments(&file, &source) {
+        let raw_comments = match oboro_jaio::collect::extract_comments(&file, &source) {
             Ok(raw_comments) => raw_comments,
             Err(err) => {
                 errors.push(JsonOperationalError {
@@ -256,8 +256,8 @@ pub(crate) fn collect_comment_files(
         let mut first_line = None;
         let mut cleaned = Vec::new();
         for raw in &raw_comments {
-            let c = jaio_collect::clean_comment(&raw.text);
-            if jaio_collect::contains_japanese(&c) {
+            let c = oboro_jaio::collect::clean_comment(&raw.text);
+            if oboro_jaio::collect::contains_japanese(&c) {
                 first_line.get_or_insert(raw.line);
                 cleaned.push(c);
             }

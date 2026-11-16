@@ -1,7 +1,7 @@
 //! トークン計測(tiktoken)。トークン効率の実測に使う(設計書 §5.1)。
 
+use crate::config::TokenEncoding;
 use anyhow::Result;
-use jaio_core::config::TokenEncoding;
 use tiktoken_rs::CoreBPE;
 
 /// BPE トークンカウンタ。

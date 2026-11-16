@@ -2,7 +2,7 @@
 # テスト用 fixture は解析対象から除外する
 [paths]
 exclude = [
-  "crates/jaio-rules/tests/fixtures",
+  "crates/oboro-jaio/tests/fixtures",
   # ログ置き場(解析対象外)
   "logs",
 ]

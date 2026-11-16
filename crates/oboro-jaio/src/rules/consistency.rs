@@ -4,14 +4,14 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::Result;
-use jaio_core::config::StyleTarget;
-use jaio_core::{Diagnostic, Location, Measurement, Severity, Span};
-use jaio_parse::doc::LeafKind;
-use jaio_parse::ja::{SentenceStyle, classify_style, split_sentences};
-use jaio_parse::morph::Morph;
+use oboro_ja_core::config::StyleTarget;
+use oboro_ja_core::doc::LeafKind;
+use oboro_ja_core::ja::{SentenceStyle, classify_style, split_sentences};
+use oboro_ja_core::morph::Morph;
+use oboro_ja_core::{Diagnostic, Location, Measurement, Severity, Span};
 
-use crate::{Coverage, DocContext, DocumentRule, RuleRun};
-use jaio_core::config::StyleOverrides;
+use super::{Coverage, DocContext, DocumentRule, RuleRun};
+use oboro_ja_core::config::StyleOverrides;
 
 use std::collections::HashSet;
 
@@ -48,7 +48,7 @@ impl StyleDeviationRule {
         // パスは寄せられ、cwd 外の実行では絶対のまま)。照合は StyleOverrides
         // が jaio.toml 基準で相対化して行うため(#76)、ここでは残る `./` を
         // normalize で除いて渡すだけ
-        let path = crate::normalize_path(Path::new(&ctx.doc.display));
+        let path = super::normalize_path(Path::new(&ctx.doc.display));
         if let Some(target) = self.overrides.get(&path) {
             return target;
         }
@@ -99,7 +99,7 @@ impl DocumentRule for StyleDeviationRule {
                             line: *line,
                             col: 1,
                         },
-                        jaio_core::snippet(text, SNIPPET_CHARS),
+                        oboro_ja_core::snippet(text, SNIPPET_CHARS),
                     )
                 })
                 .collect()
@@ -613,12 +613,12 @@ impl DocumentRule for TerminologyRule {
             // 「サーバー」が「サーバ」を部分文字列として含むため、
             // 除去しないと推奨表記の側を別表記として誤カウントする
             let count_in = |haystack: &str| -> usize {
-                crate::count_excluding_preferred(haystack, preferred, other)
+                super::count_excluding_preferred(haystack, preferred, other)
             };
             // preferred_count は素の matches で数える。other を範囲除外すると
             // 内蔵ペアの向き(other が preferred に含まれる)では推奨の出現まで
             // 消えて 0 になる(#100)。逆包含ペア(preferred が other に含まれる)
-            // は jaio-core::Config::validate で設定エラーになるため、ここでは
+            // は oboro_ja_core::config::Config::validate で設定エラーになるため、ここでは
             // 水増しの心配がない
             let preferred_count: usize = ctx
                 .leaves
@@ -752,7 +752,7 @@ impl DocumentRule for PunctuationRule {
             let mut spans_of: [Vec<Location>; 3] = [Vec::new(), Vec::new(), Vec::new()];
             let mut counts_of: [usize; 3] = [0, 0, 0];
             for leaf in ctx.leaves.iter().filter(|l| DocContext::is_body_leaf(l)) {
-                let context = jaio_core::snippet(&leaf.text, SNIPPET_CHARS);
+                let context = oboro_ja_core::snippet(&leaf.text, SNIPPET_CHARS);
                 let fallback = Span {
                     line: leaf.line,
                     col: 1,

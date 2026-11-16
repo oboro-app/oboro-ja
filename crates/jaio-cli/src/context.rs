@@ -15,7 +15,7 @@ pub(crate) struct DictIdentity {
 /// 決定的な識別子。大きい辞書に備えてファイル内容はストリーミングで読む
 pub(crate) fn dictionary_manifest_sha256(dir: &Path) -> Result<String> {
     let mut manifest = String::new();
-    for name in jaio_parse::morph::DICTIONARY_FILES {
+    for name in oboro_ja_core::morph::DICTIONARY_FILES {
         let file_path = dir.join(name);
         let mut file = fs::File::open(&file_path)
             .with_context(|| format!("辞書ファイルを開けません: {}", file_path.display()))?;
@@ -33,7 +33,7 @@ pub(crate) fn dictionary_manifest_sha256(dir: &Path) -> Result<String> {
 /// lindera-sudachidict crate 版を版表示に使う。版が取れないビルド
 /// (埋め込みなし等)や sudachidict 以外の名前では従来どおり `embedded:<name>`
 pub(crate) fn embedded_dict_display(name: &str) -> String {
-    match jaio_parse::morph::embedded_dict_version() {
+    match oboro_ja_core::morph::embedded_dict_version() {
         Some(version) if name == "sudachidict" => format!("embedded:{name}@{version}"),
         _ => format!("embedded:{name}"),
     }
@@ -142,7 +142,9 @@ pub(crate) fn build_context(
 
 /// `corpus.pair_search` を JSON 用の候補列挙記録に変換する(#36)。
 /// 列挙した候補は全て採点されるため scored_pairs = candidates。
-pub(crate) fn candidate_search_json(pair_search: &jaio_rules::PairSearch) -> JsonCandidateSearch {
+pub(crate) fn candidate_search_json(
+    pair_search: &oboro_jaio::rules::PairSearch,
+) -> JsonCandidateSearch {
     let all_pairs = pair_search.method == PairSearchMethod::AllPairs;
     JsonCandidateSearch {
         method: if all_pairs {

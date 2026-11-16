@@ -111,7 +111,10 @@ mod inline_config_tests {
         let config = config_from_inline("[paths]\nexclude = [\"tmp/\"]\n")?;
         assert!(config.paths.exclude.contains(&"tmp/".to_string()));
         // 既定は上書きされない
-        assert_eq!(config.style.target, jaio_core::config::StyleTarget::Polite);
+        assert_eq!(
+            config.style.target,
+            oboro_ja_core::config::StyleTarget::Polite
+        );
         // ファイル経路と同じ追加検証: lint.rules の未知 ID は早期エラー
         let err = config_from_inline("[lint.rules]\n\"no/such-rule\" = \"warn\"\n");
         assert!(err.is_err(), "未知のルール ID はエラーになるはず");

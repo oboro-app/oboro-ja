@@ -6,18 +6,18 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use anyhow::{Context as _, Result};
-use jaio_core::comments::CommentFile;
-use jaio_core::config::MergeConfig;
-use jaio_core::{Diagnostic, Location, Measurement, MeasurementStatus, Severity, Span};
-use jaio_index::{
+use crate::comments::CommentFile;
+use crate::index::{
     PairSearchMethod, bigram_hashes, bigram_jaccard_parts, candidate_pairs,
     containment_parts_sorted, jaccard_parts_sorted, jaccard_sorted, simhash,
 };
-use jaio_parse::doc::{Doc, LinkKind};
+use anyhow::{Context as _, Result};
+use oboro_ja_core::config::MergeConfig;
+use oboro_ja_core::doc::{Doc, LinkKind};
+use oboro_ja_core::{Diagnostic, Location, Measurement, MeasurementStatus, Severity, Span};
 use rayon::prelude::*;
 
-use crate::{CorpusRule, Coverage, RuleRun, SectionSlice, substantive_lines};
+use super::{CorpusRule, Coverage, RuleRun, SectionSlice, substantive_lines};
 
 /// リポジトリ横断解析の入力。解析済みドキュメント列(§6.1)。
 pub struct Corpus<'a> {
@@ -32,7 +32,7 @@ pub struct Corpus<'a> {
     /// 統合提案のパラメータ(jaio.toml の `[merge]`)
     pub merge: MergeConfig,
     /// 検出感度のパラメータ(jaio.toml の `[detection]`)
-    pub detection: jaio_core::config::DetectionConfig,
+    pub detection: oboro_ja_core::config::DetectionConfig,
     /// コマンドラインで明示指定されたファイル(`comparison_key` 基準の実体同一性
     /// キー)。orphan 判定から除外する
     pub explicit: HashSet<PathBuf>,
@@ -85,7 +85,7 @@ impl<'a> Corpus<'a> {
         tokens: &'a [usize],
         mtimes: &'a [SystemTime],
         merge: MergeConfig,
-        detection: jaio_core::config::DetectionConfig,
+        detection: oboro_ja_core::config::DetectionConfig,
         explicit: HashSet<PathBuf>,
         comments: &'a [CommentFile],
         sections: &'a [Vec<SectionSlice>],
@@ -484,7 +484,7 @@ impl CorpusRule for MoveIntegrityRule {
                                     line: *line,
                                     col: 1,
                                 },
-                                jaio_core::snippet(text, 40),
+                                oboro_ja_core::snippet(text, 40),
                             ));
                         }
                         diags.push(diag);
@@ -590,7 +590,7 @@ impl CorpusRule for OrphanRule {
             // 実行でも jaio.toml 基準のパターンが効く)。`matched` は絶対パスで
             // panic しない(`matched_path_or_any_parents` は使わない)。
             // 基準外の絶対パスはルート記号を外して評価する(従来互換)
-            let rel = normalize(&jaio_core::relativize_for_match(
+            let rel = normalize(&oboro_ja_core::relativize_for_match(
                 &doc.path,
                 self.base.as_deref(),
             ));

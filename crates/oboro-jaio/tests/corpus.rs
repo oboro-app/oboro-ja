@@ -5,11 +5,11 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 
-use jaio_core::config::{Config, DetectionConfig, MergeConfig};
-use jaio_core::{Diagnostic, MeasurementStatus, Severity};
-use jaio_index::normalize_text;
-use jaio_parse::doc::Doc;
-use jaio_rules::{Corpus, DocContext, default_corpus_rules};
+use oboro_ja_core::config::{Config, DetectionConfig, MergeConfig};
+use oboro_ja_core::doc::Doc;
+use oboro_ja_core::{Diagnostic, MeasurementStatus, Severity};
+use oboro_jaio::index::normalize_text;
+use oboro_jaio::rules::{Corpus, DocContext, default_corpus_rules};
 
 /// 重複検出の比較対象になる本文(正規化後 200 文字超)。
 const BODY: &str = "このドキュメントでは設定ファイルの読み込み処理とその運用について説明します。\

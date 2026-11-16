@@ -1,6 +1,6 @@
 [package]
-name = "jaio-parse"
-description = "文書構造 AST(comrak)と日本語 AST(lindera)の構築"
+name = "oboro-ja-core"
+description = "oboro-ja の共通の土台(診断モデル・設定・文書の読み方・日本語の分け方・トークン計測・規則の登録簿)"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,14 +12,18 @@ workspace = true
 [dependencies]
 anyhow = "1"
 comrak = "0.55"
-jaio-core = { path = "../jaio-core" }
+ignore = "0.4"
 lindera = { version = "6.0", default-features = true }
 # 埋め込み辞書の crate 版を実行時に取得するための直接依存(get_version)。
 # lindera/embed-sudachidict 経由の推移依存と同じ版を使う
 lindera-sudachidict = { version = "6.0", optional = true }
 serde = { version = "1", features = ["derive"] }
 tiktoken-rs = "0.12"
+toml = "0.9"
 
 [features]
 default = ["embedded-dict"]
 embedded-dict = ["lindera/embed-sudachidict", "dep:lindera-sudachidict"]
+
+[dev-dependencies]
+serde_json = "1"
