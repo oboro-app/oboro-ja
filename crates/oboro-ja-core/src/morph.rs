@@ -4,7 +4,7 @@
 use anyhow::{Context as _, Result};
 use std::path::Path;
 
-use jaio_core::config::AnalysisMode;
+use crate::config::AnalysisMode;
 use lindera::dictionary::load_dictionary;
 use lindera::mode::{Mode, Penalty};
 use lindera::segmenter::Segmenter;

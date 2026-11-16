@@ -1,13 +1,13 @@
 use super::*;
-use jaio_core::Span;
+use oboro_ja_core::Span;
 
 #[test]
 fn normalizes_leading_dot_slash() {
     assert_eq!(normalize_display(Path::new("./docs/a.md")), "docs/a.md");
     assert_eq!(normalize_display(Path::new("docs/a.md")), "docs/a.md");
     assert_eq!(
-        normalize_display(Path::new("crates/jaio-cli/../jaio-rules/a.md")),
-        "crates/jaio-rules/a.md"
+        normalize_display(Path::new("crates/jaio-cli/../oboro-jaio/a.md")),
+        "crates/oboro-jaio/a.md"
     );
     // 解析ルートを超える `..` は潜ったまま残す
     assert_eq!(normalize_display(Path::new("../x.md")), "../x.md");
@@ -127,7 +127,7 @@ fn quiet_filters_non_error_diagnostics() -> Result<()> {
     let config = Config::default();
     let mut buf = Vec::new();
     let summary = run_check(
-        &[PathBuf::from("../jaio-rules/tests/fixtures/sample.md")],
+        &[PathBuf::from("../oboro-jaio/tests/fixtures/sample.md")],
         &mut buf,
         &config,
         &OutputFormat::Json,
@@ -178,7 +178,7 @@ fn json_output_is_valid() -> Result<()> {
     let config = Config::default();
     let mut buf = Vec::new();
     let summary = run_check(
-        &[PathBuf::from("../jaio-rules/tests/fixtures/sample.md")],
+        &[PathBuf::from("../oboro-jaio/tests/fixtures/sample.md")],
         &mut buf,
         &config,
         &OutputFormat::Json,
@@ -194,7 +194,7 @@ fn json_output_is_valid() -> Result<()> {
     let context = &value["context"];
     assert_eq!(
         context["roots"],
-        serde_json::json!(["../jaio-rules/tests/fixtures/sample.md"])
+        serde_json::json!(["../oboro-jaio/tests/fixtures/sample.md"])
     );
     assert!(
         context["config_fingerprint"]
@@ -306,7 +306,7 @@ fn rule_excludes_reports_suppressed_by_path() -> Result<()> {
     )?;
     let mut buf = Vec::new();
     run_check(
-        &[PathBuf::from("../jaio-rules/tests/fixtures/sample.md")],
+        &[PathBuf::from("../oboro-jaio/tests/fixtures/sample.md")],
         &mut buf,
         &config,
         &OutputFormat::Json,
@@ -601,7 +601,7 @@ mod llm_stability_tests {
         let config = Config::default();
         let mut buf = Vec::new();
         run_check(
-            &[PathBuf::from("../jaio-rules/tests/fixtures/sample.md")],
+            &[PathBuf::from("../oboro-jaio/tests/fixtures/sample.md")],
             &mut buf,
             &config,
             &OutputFormat::Json,

@@ -2,9 +2,9 @@
 
 use std::path::PathBuf;
 
+use crate::config::StyleTarget;
 use comrak::nodes::{AstNode, NodeValue};
 use comrak::{Arena, Options, parse_document};
-use jaio_core::config::StyleTarget;
 
 /// 解析対象ドキュメント。
 pub struct Doc {

@@ -134,7 +134,7 @@ pub(crate) fn analyze_file(
 
     let (mut doc, leaves, headings) = Doc::parse(file.clone(), source);
     // 照合・表示とも display(normalize_display)を正とする。パターン照合系の
-    // パス基準の統一は jaio_core::relativize_for_match が担う(#76/#87/#89)
+    // パス基準の統一は oboro_ja_core::relativize_for_match が担う(#76/#87/#89)
     doc.display = normalize_display(file);
     let mut diagnostics = Vec::new();
     let mut rule_stats = Vec::with_capacity(rules.len());
@@ -582,23 +582,23 @@ pub(crate) fn render_result(
 ) -> Result<()> {
     match format {
         OutputFormat::Terminal { color } => {
-            jaio_report::render(out, diagnostics, *color)?;
+            oboro_jaio::report::render(out, diagnostics, *color)?;
             write_check_summary(out, summary)?;
         }
         OutputFormat::Json => {
-            let report = jaio_report::JsonReport::new(
+            let report = oboro_jaio::report::JsonReport::new(
                 summary,
                 diagnostics,
                 context,
                 env!("CARGO_PKG_VERSION"),
             );
-            jaio_report::render_json(out, &report)?;
+            oboro_jaio::report::render_json(out, &report)?;
         }
         OutputFormat::Markdown => {
-            jaio_report::render_markdown(out, diagnostics, summary)?;
+            oboro_jaio::report::render_markdown(out, diagnostics, summary)?;
         }
         OutputFormat::Sarif => {
-            jaio_report::render_sarif(out, diagnostics, env!("CARGO_PKG_VERSION"))?;
+            oboro_jaio::report::render_sarif(out, diagnostics, env!("CARGO_PKG_VERSION"))?;
         }
     }
     Ok(())
@@ -766,7 +766,7 @@ pub(crate) fn write_check_summary(
 mod tests {
     use super::*;
 
-    use jaio_core::Span;
+    use oboro_ja_core::Span;
 
     fn orphan(file: &str) -> Diagnostic {
         Diagnostic::new(

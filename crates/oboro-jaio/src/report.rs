@@ -1,10 +1,10 @@
-//! jaio-report: 診断の出力。terminal 形式(§7.1)と JSON 形式(§7.3)、
+//! 診断の出力。terminal 形式(§7.1)と JSON 形式(§7.3)、
 //! Markdown 形式(§7.2)を提供する。
 
 use std::collections::HashMap;
 use std::io::Write;
 
-use jaio_core::{Diagnostic, Measurement, MeasurementStatus, Severity};
+use oboro_ja_core::{Diagnostic, Measurement, MeasurementStatus, Severity};
 use serde::Serialize;
 
 /// terminal 出力で occurrences 行に表示する最大行数。
@@ -541,7 +541,7 @@ fn paint(color: bool, code: &str, text: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jaio_core::{Location, Span};
+    use oboro_ja_core::{Location, Span};
 
     fn sample_diagnostic() -> Diagnostic {
         Diagnostic::new(

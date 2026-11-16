@@ -7,13 +7,13 @@ use std::path::PathBuf;
 use std::collections::HashSet;
 use std::time::SystemTime;
 
-use jaio_core::Severity;
-use jaio_core::comments::CommentFile;
-use jaio_core::config::{Config, DetectionConfig, MergeConfig};
-use jaio_parse::doc::Doc;
-use jaio_parse::morph::Analyzer;
-use jaio_parse::tokencount::TokenCounter;
-use jaio_rules::{Corpus, DocContext, default_corpus_rules, default_rules, normalize_path};
+use oboro_ja_core::Severity;
+use oboro_ja_core::config::{Config, DetectionConfig, MergeConfig};
+use oboro_ja_core::doc::Doc;
+use oboro_ja_core::morph::Analyzer;
+use oboro_ja_core::tokencount::TokenCounter;
+use oboro_jaio::comments::CommentFile;
+use oboro_jaio::rules::{Corpus, DocContext, default_corpus_rules, default_rules, normalize_path};
 
 fn fixture() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample.md")
@@ -73,7 +73,7 @@ fn detects_all_expected_rule_kinds() -> anyhow::Result<()> {
 }
 
 /// インラインの Markdown に全ルールを適用して、診断を返す。
-fn diagnostics_on(source: &str) -> anyhow::Result<Vec<jaio_core::Diagnostic>> {
+fn diagnostics_on(source: &str) -> anyhow::Result<Vec<oboro_ja_core::Diagnostic>> {
     diagnostics_on_with(source, DetectionConfig::default())
 }
 
@@ -81,7 +81,7 @@ fn diagnostics_on(source: &str) -> anyhow::Result<Vec<jaio_core::Diagnostic>> {
 fn diagnostics_on_with(
     source: &str,
     detection: DetectionConfig,
-) -> anyhow::Result<Vec<jaio_core::Diagnostic>> {
+) -> anyhow::Result<Vec<oboro_ja_core::Diagnostic>> {
     let (doc, leaves, headings) = Doc::parse(PathBuf::from("inline.md"), source.to_string());
     let mut analyzer = Analyzer::new()?;
     let counter = TokenCounter::new()?;
@@ -1280,9 +1280,9 @@ fn consolidation_groups_duplicates_and_respects_min_similarity() -> anyhow::Resu
     let base = "このセクションでは設定ファイルの読み込み処理について説明します。設定ファイルは起動時に一度だけ読み込まれ、変更された場合は再起動が必要です。読み込みに失敗した場合はエラーメッセージを表示して終了します。".repeat(3);
     let docs = vec![empty_doc("a.md"), empty_doc("b.md"), empty_doc("c.md")];
     let bodies = vec![
-        jaio_index::normalize_text(&base),
-        jaio_index::normalize_text(&base),
-        jaio_index::normalize_text(&base),
+        oboro_jaio::index::normalize_text(&base),
+        oboro_jaio::index::normalize_text(&base),
+        oboro_jaio::index::normalize_text(&base),
     ];
     let tokens = vec![300usize; 3];
     let mtimes = vec![SystemTime::UNIX_EPOCH; 3];
@@ -1347,13 +1347,13 @@ fn detects_doc_comment_drift() -> anyhow::Result<()> {
     // 文書本文は比較対象の最小長(200 字)を超える必要がある
     let body = "このセクションでは設定ファイルの読み込み処理について説明します。設定ファイルは起動時に一度だけ読み込まれ、変更された場合は再起動が必要です。読み込みに失敗した場合はエラーメッセージを表示して終了します。".repeat(3);
     let docs = vec![empty_doc("docs/config.md")];
-    let bodies = vec![jaio_index::normalize_text(&body)];
+    let bodies = vec![oboro_jaio::index::normalize_text(&body)];
     let tokens = vec![300usize];
     let mtimes = vec![SystemTime::UNIX_EPOCH];
     let comments = vec![CommentFile {
         path: PathBuf::from("src/config.rs"),
         display: "src/config.rs".to_string(),
-        body: jaio_index::normalize_text(&body),
+        body: oboro_jaio::index::normalize_text(&body),
         first_line: 7,
         sha256: String::new(),
     }];
@@ -1387,12 +1387,12 @@ fn short_comments_are_ignored_for_drift() -> anyhow::Result<()> {
     let doc_body = "このセクションでは設定ファイルの読み込み処理について説明します。設定ファイルは起動時に一度だけ読み込まれ、変更された場合は再起動が必要です。読み込みに失敗した場合はエラーメッセージを表示して終了します。".repeat(3);
     let comment_body = "設定を読み込みます";
     let docs = vec![empty_doc("docs/config.md")];
-    let bodies = vec![jaio_index::normalize_text(&doc_body)];
+    let bodies = vec![oboro_jaio::index::normalize_text(&doc_body)];
     let mtimes = vec![SystemTime::UNIX_EPOCH];
     let comments = vec![CommentFile {
         path: PathBuf::from("src/config.rs"),
         display: "src/config.rs".to_string(),
-        body: jaio_index::normalize_text(comment_body),
+        body: oboro_jaio::index::normalize_text(comment_body),
         first_line: 1,
         sha256: String::new(),
     }];
@@ -1851,7 +1851,7 @@ fn run_style_rule(
     path: &str,
     source: &str,
     config: &Config,
-) -> anyhow::Result<Vec<jaio_core::Diagnostic>> {
+) -> anyhow::Result<Vec<oboro_ja_core::Diagnostic>> {
     let (doc, leaves, headings) = Doc::parse(PathBuf::from(path), source.to_string());
     let mut analyzer = Analyzer::new()?;
     let counter = TokenCounter::new()?;
