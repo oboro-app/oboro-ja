@@ -137,11 +137,11 @@ dictionary = "/path/to/lindera-sudachidict"
 
 ## リリース担当(エージェント運用)
 
-リリースは `/release` コマンド(または `scripts/release.sh` の直接実行)で行います。
+リリースは `scripts/release.sh` の直接実行で行います。
 エージェントが把握する手段:
 
 - **手順の正本はこのファイル**(`docs/release.md`)
-- `/release` コマンド(`.opencode/commands/release.md`)はこのファイルの薄いラッパ
+- リリース判定の原則は `AGENTS.md`「リリースの確認」
 - `feat`/`fix` を含むコミットを push したエージェントが、同じセッション中に
   リリースする
 
