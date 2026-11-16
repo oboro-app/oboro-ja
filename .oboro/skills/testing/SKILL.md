@@ -29,7 +29,7 @@ The closer to the outside, the stronger the evidence and the slower. Pick the in
 | Module | Rule logic, AST, normalization, config | `#[cfg(test)]` in `crates/*/src/` |
 | Cross-crate behavior | CLI output contract, schema files | `crates/jaio-cli/tests/` (drives the real binary or library entry) |
 | Harness | Check tooling | `scripts/test_*.py` |
-| Real CLI | Look, exit codes, output a user reads | `cargo run -p jaio-cli` on a real corpus (steps below) |
+| Real CLI | Look, exit codes, output a user reads | `cargo run -p jaio-cli --features embedded-dict` on a real corpus (steps below) |
 
 ## How to write
 
@@ -37,7 +37,7 @@ The closer to the outside, the stronger the evidence and the slower. Pick the in
 - Use real things over mocks: a temporary directory tree for file walking, real Markdown input for parsing, real config text for `jaio.toml` handling.
 - Put temporary files and directories in `tempfile` and always clean up, including child processes.
 - Do not wait with `sleep`; wait with a deadline until a condition holds. The condition is "usable".
-- When a fixture asserts a relative path, build it from the repo's own fixtures (for example `crates/jaio-rules/tests/fixtures/`) and keep the exclusion list in `jaio.toml` in sync.
+- When a fixture asserts a relative path, build it from the repo's own fixtures (for example `crates/oboro-jaio/tests/fixtures/`) and keep the exclusion list in `jaio.toml` in sync.
 - When adding a rule, give it: a minimal positive case, a minimal negative case, and a case at the threshold (the config value boundary). One table per rule beats scattered tests.
 - When a rule reports line numbers or sourcepos, assert the exact position on a fixture; Markdown link and heading handling must stay inside comrak's sourcepos, not raw-text normalization.
 - When a test fails only occasionally, treat it as a bug that was passing by environmental luck. "Cannot reproduce" is not completion.
@@ -63,7 +63,7 @@ A test that passes locally but fails in another checkout (different OS, dictiona
 
 Even if automated tests pass, do not treat user-visible output as verified until produced by the real command on a real corpus.
 
-1. Run `cargo run -p jaio-cli -- check <path>` (and `stats`, `rules`, `explain` when touched) on the repository itself or a fixture corpus.
+1. Run `cargo run -p jaio-cli --features embedded-dict -- check <path>` (and `stats`, `rules`, `explain` when touched) on the repository itself or a fixture corpus. The default build embeds no dictionary, so `check`, `stats` and `dump` need the feature or `[analysis] dictionary` in `jaio.toml`.
 2. Read the actual output: severity, rule ID, file, line. A command that exits 0 with wrong output is not verified.
 3. For `--format json`, validate the output against `docs/schema/` and the schema tests in `crates/jaio-cli/tests/schema.rs`.
 4. If cleanup is needed (temporary corpora, caches), verify the cleanup steps too, and report what verification left behind.
