@@ -13,5 +13,8 @@ __pycache__/
 !/logs/.gitkeep
 /scripts/field-baselines/
 
+# oboro の Main agent が書くローカル状態(orchestrator スキル)
+.oboro/state.md
+
 # OS
 .DS_Store
