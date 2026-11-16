@@ -39,7 +39,7 @@ The default when a repo has not decided otherwise. A repo may tighten or loosen 
 | Area | Baseline |
 |---|---|
 | Check command | One command runs types, lints, tests, and repo checks; every check in this table runs in it, not in a separate optional script |
-| TypeScript | `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noFallthroughCasesInSwitch`, `noImplicitOverride`, `noUnusedLocals`, `noUnusedParameters`. Lint `any`, non-null assertions, and unchecked `as` as errors outside generated code; see the `frontend` skill for absence (`null` vs `undefined`) and exhaustive unions |
+| TypeScript | `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noFallthroughCasesInSwitch`, `noImplicitOverride`, `noUnusedLocals`, `noUnusedParameters`. Lint `any`, non-null assertions, and unchecked `as` as errors outside generated code |
 | JS/TS lint | Biome's recommended set, run with warnings as errors. Unused-code or duplicate checks from separate tools only when measured yield justifies them |
 | Rust | `clippy` with warnings as errors, plus a `[lints]` table that decides `unwrap`/`expect` outside tests, holding locks across `await`, and blocking calls in async code |
 | Boundaries | Types that cross a process or language boundary (IPC, HTTP, files) are generated from one source (OpenAPI or the backend's types), and a check fails when the copy drifts. No runtime schema validation on hot paths |

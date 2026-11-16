@@ -67,6 +67,11 @@ cargo のビルド・テストは `<obr> resources run -- <command>` で実行�
 
 ## 検証運用
 
+- 実装とレビューは oboro の管理下 worktree(`obr task start`・`obr agent start` が作る)で行う。
+  worktree の作成・削除は daemon に任せ、自分で git worktree を作らない。
+  worktree の `target/` は空のため、初回の cargo ビルド・テストは時間がかかる
+  (`testing` スキルの New worktree 参照)。pre-push ゲートは作業ツリー全体を
+  検証するため、他者の未コミット WIP があるチェックアウトでは push しない
 - **CI と GitHub Actions は使用しない**。`.github/workflows` へのファイル追加は禁止。
   `./scripts/check-all.sh` が workflows の存在を検出して失敗させる
 - 品質ゲートはローカル環境での `./scripts/check-all.sh` を正とする。
@@ -152,10 +157,20 @@ oboro-ja/
 依存の方向は一方向のみ(`設計書 §6.3`): `cli → report/rules/index/parse/collect → core`。
 循環依存を許さない。crate 追加時はこの構成に従う。
 
+## 表記(Notation)
+
+| 対象 | 規則 |
+|---|---|
+| 会話・コードコメント | 日本語 |
+| 変数・関数名・コード | 英語(国際標準) |
+| 記号 | ASCII(emoji は不使用) |
+| `docs/` の文書 | 丁寧体(ですます体)かつ無駄のない文章(設計書 §1.3) |
+| ハーネス文書(この AGENTS.md・`.oboro/` の日本語文書) | である体 |
+| コミットメッセージ | 変更の意図を 1 行(conventional commits 風: feat / fix / docs / chore / test / refactor) |
+
 ## コーディング規約
 
 - **コメント**: 日本語で書く。自明なコードにはコメントを追加せず、設計意図がある場合のみ記述する
-- **変数・関数名**: 英語(国際標準)
 - **文字列・パス処理の注意**(実装レビュー #66〜#68/#73/#76/#79 の教訓):
   Markdown 構文(リンク・見出し・コード)を扱う処理は comrak の構文範囲
   (sourcepos)に限定し、生テキストへの正規化を書かない。パターン照合
@@ -163,9 +178,7 @@ oboro-ja/
   (jaio.toml 基準 → cwd の多段相対化)を使い、cwd 単独基準を書かない
 - **フォーマット**: `cargo fmt`(`rustfmt.toml` の `style_edition = "2024"`)を正とする。
   エディタや他ツールの import 自動整理に任せず、コミット前に `cargo fmt --all` を通す
-- **emoji**: 使用しない
 - **ログ**: ログファイルはリポジトリ TOP の `logs/` に配置する
-- **会話**: 日本語で行う
 
 ## ドキュメント運用
 

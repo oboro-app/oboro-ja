@@ -2,7 +2,7 @@
 
 The reader runs `git log` or blame months later. The subject tells them what changed; the body tells them why.
 
-The commit command, the body sections and when an ADR is required are in the repo's Notation in [AGENTS.md](../../../../AGENTS.md).
+The commit message form is the repo's Notation in [AGENTS.md](../../../../AGENTS.md). Decision records, when split out, live under `docs/` per the docs map.
 
 ## Shape
 

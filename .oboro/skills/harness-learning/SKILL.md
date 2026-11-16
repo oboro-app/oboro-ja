@@ -37,8 +37,8 @@ Write "in what situation, what tends to happen, how to judge". Leave room for us
 |---|---|
 | Applies to every area, one line | `AGENTS.md` (repo root) |
 | A repeated procedure | A skill; one concern per skill, split a large one |
-| Facts about a tool or area | `.oboro/knowledge/<topic>.md` with version and evidence |
-| Decidable by a machine | A check in `.oboro/checks/` with its test |
+| Facts about a tool or area | A section of the related skill, or `AGENTS.md`; this repo keeps no `.oboro/knowledge/` |
+| Decidable by a machine | A check script in `scripts/` with its behavior test (`scripts/test_*.py`) |
 | Product fact or decision | `docs/`, not the harness |
 
 ## Check and write
