@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/dump-morph.schema.json",
   "title": "jaio dump morph",
-  "description": "jaio dump morph の出力(設計書 §7.2、Issue #16)。形態素解析結果のダンプ。check と同じ実効設定の識別情報を含む(#39)。version は jaio_report::SCHEMA_VERSION と連動する。",
+  "description": "jaio dump morph の出力(設計書 §7.2、Issue #16)。形態素解析結果のダンプ。check と同じ実効設定の識別情報を含む(#39)。version は oboro_jaio::report::SCHEMA_VERSION と連動する。",
   "type": "object",
   "required": ["kind", "version", "file", "config_fingerprint", "algorithms", "leaves"],
   "properties": {
