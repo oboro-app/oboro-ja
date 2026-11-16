@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/oboro-app/oboro-ja/docs/schema/dump-doc.schema.json",
   "title": "jaio dump doc",
-  "description": "jaio dump doc の出力(設計書 §7.2、Issue #16)。文書構造 AST(leaf・heading・links・frontmatter 領域)のダンプ。version は jaio_report::SCHEMA_VERSION と連動する。フィールドの削除・型変更は version 更新の前提でのみ行う。",
+  "description": "jaio dump doc の出力(設計書 §7.2、Issue #16)。文書構造 AST(leaf・heading・links・frontmatter 領域)のダンプ。version は oboro_jaio::report::SCHEMA_VERSION と連動する。フィールドの削除・型変更は version 更新の前提でのみ行う。",
   "type": "object",
   "required": [
     "kind",

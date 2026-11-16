@@ -62,8 +62,9 @@ pub struct AnalysisConfig {
     /// トークン計測用エンコーディング
     #[serde(default)]
     pub encoding: TokenEncoding,
-    /// 外部の lindera 辞書ディレクトリ(Sudachi スキーマ)。未指定なら埋め込み辞書を使う。
-    /// 埋め込み辞書なしでビルドした場合(`--no-default-features`)は必須
+    /// 外部の lindera 辞書ディレクトリ(Sudachi スキーマ)。既定のビルドは辞書を
+    /// 埋め込まないため必須。未指定で使えるのは feature `embedded-dict` の
+    /// ビルドだけで、その場合は埋め込み辞書を使う(設計書 §6.5)
     #[serde(default)]
     pub dictionary: Option<String>,
 }
