@@ -73,6 +73,7 @@ pub struct AnalysisConfig {
 /// lindera の Mode 種別を指す(§4.2)。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum AnalysisMode {
     /// 通常の Viterbi 最適分割(既定)
     #[default]
@@ -83,6 +84,7 @@ pub enum AnalysisMode {
 
 /// トークン計測用エンコーディング。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
+#[non_exhaustive]
 pub enum TokenEncoding {
     /// o200k_base(GPT-4o 系、既定)
     #[default]
@@ -134,6 +136,7 @@ pub struct StyleConfig {
 /// 文書の既定文体。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum StyleTarget {
     /// ですます体(敬体)。§1.3 の既定
     #[default]
@@ -586,6 +589,7 @@ pub fn normalize_lexical(path: &Path) -> PathBuf {
 /// 重大度の設定値。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum SeveritySetting {
     /// error に引き上げる(設計書 §8 の `deny` 表記も許容)
     #[serde(alias = "deny")]

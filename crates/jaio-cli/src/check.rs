@@ -586,13 +586,10 @@ pub(crate) fn render_result(
             write_check_summary(out, summary)?;
         }
         OutputFormat::Json => {
-            let report = oboro_jaio::report::JsonReport::new(
-                summary,
-                diagnostics,
-                context,
-                env!("CARGO_PKG_VERSION"),
-            );
-            oboro_jaio::report::render_json(out, &report)?;
+            // JSON は入口 crate 経由で出す(設計書 §6.3、#9)
+            let report =
+                oboro_ja::JsonReport::new(summary, diagnostics, context, env!("CARGO_PKG_VERSION"));
+            oboro_ja::render_json(out, &report)?;
         }
         OutputFormat::Markdown => {
             oboro_jaio::report::render_markdown(out, diagnostics, summary)?;
@@ -641,7 +638,8 @@ pub(crate) fn summarize(
         match diagnostic.severity {
             Severity::Error => summary.errors += 1,
             Severity::Warn => summary.warnings += 1,
-            Severity::Info => summary.infos += 1,
+            // Info と将来の変種
+            _ => summary.infos += 1,
         }
     }
     // --verbose の計測があればフェーズ別時間と上位スロールールを載せる(Issue #18)

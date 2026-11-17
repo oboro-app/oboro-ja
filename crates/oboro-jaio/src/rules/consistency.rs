@@ -67,6 +67,7 @@ impl DocumentRule for StyleDeviationRule {
         match self.target {
             StyleTarget::Polite => "ですます体を既定とした文体の逸脱",
             StyleTarget::Plain => "である体を既定とした文体の逸脱",
+            _ => "文体の逸脱",
         }
     }
 
@@ -84,7 +85,8 @@ impl DocumentRule for StyleDeviationRule {
                 match classify_style(&morphs) {
                     SentenceStyle::Polite => polite.push((leaf.line, sentence.text)),
                     SentenceStyle::Plain => plain.push((leaf.line, sentence.text)),
-                    SentenceStyle::Neutral => {}
+                    // Neutral と将来の変種
+                    _ => {}
                 }
             }
         }
@@ -114,11 +116,13 @@ impl DocumentRule for StyleDeviationRule {
         ) = match target {
             StyleTarget::Polite => ("ですます体", "である体", polite.len(), &plain),
             StyleTarget::Plain => ("である体", "ですます体", plain.len(), &polite),
+            _ => ("既定文体", "逸脱文体", polite.len(), &plain),
         };
         let other_count = other.len();
         let target_help = match target {
             StyleTarget::Polite => "ですます体(丁寧体)へ統一してください",
             StyleTarget::Plain => "である体(常体)へ統一してください",
+            _ => "文書の既定文体へ統一してください",
         };
 
         let mut diags = Vec::new();
@@ -183,6 +187,7 @@ impl DocumentRule for StyleDeviationRule {
                 match target {
                     StyleTarget::Polite => "である体が適切な文書",
                     StyleTarget::Plain => "ですます体が適切な文書",
+                    _ => "既定と異なる文体が適切な文書",
                 }
             ));
             diag.measurements = style_measurements();

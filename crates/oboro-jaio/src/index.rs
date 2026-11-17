@@ -222,6 +222,7 @@ const BAND_COUNT: u32 = 4;
 /// 近似検索での未検出は「全ペアを調べて類似なし」と同義ではないため、
 /// 使った方式を黙って切り替えず出力に残す。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum PairSearchMethod {
     /// 全ペアを n-gram 照合の候補にした(文書数が上限以下、または強制指定)
     AllPairs,

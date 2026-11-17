@@ -77,10 +77,12 @@ pub(crate) fn algorithms(config: &Config, dict_id: &DictIdentity) -> JsonAlgorit
     let mode = match config.analysis.mode {
         AnalysisMode::Normal => "normal",
         AnalysisMode::Decompose => "decompose",
+        _ => "unknown",
     };
     let encoding = match config.analysis.encoding {
         TokenEncoding::O200kBase => "o200k_base",
         TokenEncoding::Cl100kBase => "cl100k_base",
+        _ => "unknown",
     };
     let dict = &dict_id.display;
     JsonAlgorithms {

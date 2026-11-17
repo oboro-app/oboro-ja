@@ -143,6 +143,7 @@ oboro-ja/
 ├── crates/
 │   ├── oboro-ja-core/      # 共通の土台(診断モデル・設定・文書の読み方・日本語の分け方・トークン計測・規則の登録簿)
 │   ├── oboro-jaio/         # 診断(rules / index / report / collect / comments の module)
+│   ├── oboro-ja/           # 入口(JSON 出力・SCHEMA。組み込み側の唯一の依存先)
 │   └── jaio-cli/           # 単独の CLI(バイナリ jaio、clap)
 ├── scripts/
 │   ├── check-all.sh        # 品質ゲート一括実行
@@ -150,7 +151,7 @@ oboro-ja/
 └── logs/                   # ログ置き場(git 管理外)
 ```
 
-依存の方向は一方向のみ(`設計書 §6.3`): `jaio-cli → oboro-jaio → oboro-ja-core`。
+依存の方向は一方向のみ(`設計書 §6.3`): `jaio-cli → oboro-ja → oboro-jaio → oboro-ja-core`。
 循環依存を許さない。crate 追加時はこの構成に従う。
 
 ## 表記(Notation)
