@@ -1,0 +1,50 @@
+# CI: 部品だけで閉じた cargo の検査(fmt / clippy / test)と各 OS のビルド。
+# 検証運用の正本は AGENTS.md(ローカル品質ゲート scripts/check-all.sh を正とし、
+# CI はその検査部分と同じ cargo の検査を回す。jaio 自己適用などの
+# ローカル専用の検査はここには含めない)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 公開 repo の既定権限は読み取りのみに絞る
+permissions:
+  contents: read
+
+# 同一 PR の連続 push は古い実行を打ち切る
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: fmt / clippy / test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo fmt
+        run: cargo fmt --all --check
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: cargo test
+        run: cargo test --workspace
+
+  build:
+    name: build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo build
+        run: cargo build --workspace

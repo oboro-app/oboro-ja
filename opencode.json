@@ -8,11 +8,6 @@
       "action": "shell",
       "resource": "git push *",
       "effect": "ask"
-    },
-    {
-      "action": "edit",
-      "resource": ".github/workflows/*",
-      "effect": "deny"
     }
   ]
 }

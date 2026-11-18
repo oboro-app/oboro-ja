@@ -56,7 +56,8 @@ gh release view v<version> -R oboro-app/oboro-ja
 
 ### タグ未リリースの補填(気づき駆動)
 
-タグ push をトリガーとする自動添付は行いません(AGENTS.md の CI・GitHub Actions 禁止)。
+タグ push をトリガーとする自動添付は行いません(リリース物はローカルビルドで
+作る運用。CI の GitHub Actions は fmt / clippy / test と各 OS build の検査のみ)。
 代わりに、**タグに対応する GitHub Release が存在しないことに気づいた時点で補填**します:
 
 ```sh

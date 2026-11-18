@@ -344,7 +344,7 @@ fn simplify_link_ranges(line: &str, ranges: &[Range<usize>]) -> String {
     let mut text = line.to_string();
     // 後ろから置き換えて前方範囲のオフセットを維持する
     let mut sorted: Vec<&Range<usize>> = ranges.iter().collect();
-    sorted.sort_by(|a, b| b.start.cmp(&a.start));
+    sorted.sort_by_key(|r| std::cmp::Reverse(r.start));
     for range in sorted {
         let Some(seg) = text.get(range.clone()) else {
             continue;
