@@ -68,7 +68,7 @@ Target main with the PR. Per PR, run only what the testing skill's [Check scope]
 回したコマンドと結果、影響を想定して回した範囲、回さなかった範囲とその理由
 ```
 
-Verify mainly with local checks. Before merge, oboro runs checks per `[ci]` in the repo's `.oboro/config.toml` (for this repo, fmt + clippy + test). GitHub Actions is not used.
+Verify mainly with local checks. Before merge, oboro runs checks per `[ci]` in the repo's `.oboro/config.toml` (for this repo, fmt + clippy + test). GitHub Actions also runs the same checks and per-OS builds (`.github/workflows/ci.yml`).
 
 ## Requesting review
 

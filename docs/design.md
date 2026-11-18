@@ -789,7 +789,7 @@ terms = ["リポジトリ", "レポジトリ"]
 
 ### Phase 1 — 単一ドキュメント内解析(完了)
 
-- [x] Cargo workspace 骨格、品質ゲート(ローカル `check-all.sh` による fmt / clippy / test。CI 不使用運用は `AGENTS.md` 参照)
+- [x] Cargo workspace 骨格、品質ゲート(ローカル `check-all.sh` による fmt / clippy / test。CI は GitHub Actions で同じ cargo 検査と各 OS の build を実行、運用は `AGENTS.md` 参照)
 - [x] comrak による文書構造 AST 構築
 - [x] lindera + Sudachi による形態素解析・日本語 AST
 - [x] tiktoken-rs によるトークン計測

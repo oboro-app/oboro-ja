@@ -45,7 +45,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 
 # --- 全チェック一括実行(品質ゲートの正) ---
-./scripts/check-all.sh                    # fmt + clippy + test + jaio 自己適用 + スクリプト構文 + CI禁止ガード
+./scripts/check-all.sh                    # fmt + clippy + test + jaio 自己適用 + スクリプト構文
 
 # --- リリース(プライベート GitHub Releases) ---
 ./scripts/release.sh                      # 品質ゲート → ビルド → タグ → アップロード
@@ -72,8 +72,10 @@ cargo のビルド・テストは `<obr> resources run -- <command>` で実行�
   worktree の `target/` は空のため、初回の cargo ビルド・テストは時間がかかる
   (`testing` スキルの New worktree 参照)。pre-push ゲートは作業ツリー全体を
   検証するため、他者の未コミット WIP があるチェックアウトでは push しない
-- **CI と GitHub Actions は使用しない**。`.github/workflows` へのファイル追加は禁止。
-  `./scripts/check-all.sh` が workflows の存在を検出して失敗させる
+- **CI は GitHub Actions で回す**(`.github/workflows/ci.yml`): 部品だけで閉じた
+  cargo の検査(fmt / clippy / test)と各 OS の build。ローカル品質ゲートと同じ
+  検査部品を回し、ローカル専用の検査(jaio 自己適用、スクリプト構文)は含めない。
+  CI 用の secret は使わない
 - 品質ゲートはローカル環境での `./scripts/check-all.sh` を正とする。
   ゲートには **jaio 自己適用**(このリポジトリの文書を jaio で解析、error 重大度
   のみで落とす常設ドッグフーディング、#71)が含まれる
@@ -83,8 +85,6 @@ cargo のビルド・テストは `<obr> resources run -- <command>` で実行�
 - **試験の期待を緩めない**。テストを削除・弱体化して通すことを禁ずる
 - コミット前(pre-commit)に fmt + clippy(Rust 関連のステージがある場合)、
   プッシュ前(pre-push)に check-all 全体が自動実行される
-- この CI 禁止は **jaio 自身のリポジトリ開発運用**についてのルール。
-  jaio を他のリポジトリの CI から利用するための機能(SARIF 出力等、設計書 Phase 3)は対象外
 
 ## レビューと gate
 
@@ -206,7 +206,6 @@ oboro-ja/
 禁止事項:
 
 - 作業進捗を実装コードや `docs/` に書かない(未解決事項は GitHub Issues だけに置く)
-- `.github/workflows` を追加しない
 - 無関係なリファクタリングやフォーマット変更を混ぜない
 
 ## セッション引き継ぎ

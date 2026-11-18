@@ -16,8 +16,9 @@
 # 生成物(--with-dict):
 #   上記に加えて jaio-full-v<version>-<os>-<arch>.tar.gz(辞書同梱、即実行可)
 #
-# CI 不使用運用(AGENTS.md): GitHub Actions は使わず、ローカルでビルドして
-# gh CLI でアップロードする。実行者のマシンがビルド環境となる。
+# リリース物のビルド・アップロードはローカルで行う(CI の GitHub Actions は
+# fmt / clippy / test と各 OS build の検査のみで、リリースの自動生成は担わない)。
+# gh CLI でアップロードし、実行者のマシンがビルド環境となる。
 #
 # バイナリの取得(メンバー):
 #   gh release download v<version> -R oboro-app/oboro-ja
