@@ -77,7 +77,7 @@ Per PR, build only what the change needs. This binds the implementer and every r
 | Any | `cargo fmt --all --check` and `cargo clippy --workspace --all-targets -- -D warnings` |
 | Touches Rust (`crates/`, `*.rs`, `Cargo.toml`) | Also `cargo test --workspace` with a filter for the changed scope when the full suite is not needed. No unfiltered run just to watch it pass |
 | Touches docs or harness only | No cargo command beyond fmt/clippy on unchanged Rust (they pass unchanged). Run the scripts touched with `bash -n` (shell) or `ast.parse` (python), and the evaluator behavior tests `python3 scripts/test_eval_*.py` when `scripts/eval-*.py` changed |
-| Full `./scripts/check-all.sh` (adds jaio self-application and the CI-ban guard) | On pre-push and release, not per PR; run it when the change touches documents the self-application reads or the gate itself |
+| Full `./scripts/check-all.sh` (adds jaio self-application) | On pre-push and release, not per PR; run it when the change touches documents the self-application reads or the gate itself |
 
 `cargo test` takes one filter; it is a substring, not a regex. Run several tests with a shared substring, or several `cargo test` calls in one `resources run`. Write the scope run and not run in the PR's "Test notes".
 

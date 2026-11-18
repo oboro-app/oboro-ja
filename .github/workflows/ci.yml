@@ -9,6 +9,10 @@ on:
     branches: [main]
   pull_request:
 
+# 公開 repo の既定権限は読み取りのみに絞る
+permissions:
+  contents: read
+
 # 同一 PR の連続 push は古い実行を打ち切る
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

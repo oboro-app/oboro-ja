@@ -74,7 +74,7 @@ Keep the checks in force and each deviation from the baseline with its reason in
 
 | Item | Use |
 |---|---|
-| Check command | `./scripts/check-all.sh` (fmt + clippy + test + jaio self-application + script syntax + CI-ban guard). Per-PR scope: the testing skill's [Check scope](../testing/SKILL.md#check-scope) |
+| Check command | `./scripts/check-all.sh` (fmt + clippy + test + jaio self-application + script syntax). Per-PR scope: the testing skill's [Check scope](../testing/SKILL.md#check-scope) |
 | Format | `cargo fmt` with `rustfmt.toml` (`style_edition = "2024"`) is the source of truth |
 | Lint | `clippy --workspace --all-targets -- -D warnings`; warnings are never committed |
 | Repo checks | `scripts/check-all.sh` steps 4-5: jaio self-application on this repo's own documents and script syntax checks |
