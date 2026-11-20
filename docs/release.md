@@ -108,10 +108,10 @@ tag の指定は [README](../README.md#crate-として取り込む) を参照し
 | 順 | 取り込む側の作業 |
 |---|---|
 | 1 | [GitHub Releases](https://github.com/oboro-app/oboro-ja/releases) で新しい tag と、互換のない変更の有無を確かめる |
-| 2 | `Cargo.toml` の `tag = "v<version>"` を更新先に書き換える |
+| 2 | `Cargo.toml` の `tag = "v<version>"` に更新する版を指定する |
 | 3 | `cargo update -p oboro-ja` で `Cargo.lock` の commit を更新する |
 | 4 | 取り込む側の検査を通す。互換のない変更を含む版では、リリースノートの移行の方法に従って直す |
-| 5 | 辞書を更新するときは、同じリリースの `jaio-dict-*.tar.gz` と `.sha256` を使って照合する |
+| 5 | 辞書を更新するときは、同じリリースの `jaio-dict-*.tar.gz` を `.sha256` で照合し、呼び出し側の辞書ディレクトリに展開する。辞書の形式と検証は [設計書](design.md#65-辞書の取得と検証) を参照 |
 
 ## リリーススクリプト
 

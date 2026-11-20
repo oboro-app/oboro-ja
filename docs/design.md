@@ -263,7 +263,7 @@ oboro-ja/
 
 ほかのリポジトリは、入口 crate を git の tag で 1 つだけ依存に入れます。手順は `README.md`、版の付け方と追随の手順は `docs/release.md` を参照してください。
 
-suiko の Rust 実装は `oboro-ja-suiko` に置きます。単体の `suiko` CLI と oboro は、どちらも入口 crate 経由で呼びます。suiko と jaio はそれぞれ共通の土台に依存します。
+suiko は文書の推敲を支える道具です。Rust の実装は `oboro-ja-suiko` に置きます。単体の `suiko` CLI と oboro は、どちらも入口 crate 経由で呼びます。suiko と jaio はそれぞれ共通の土台に依存します。
 
 ### 6.4 規則の登録簿
 
@@ -298,7 +298,9 @@ suiko の Rust 実装は `oboro-ja-suiko` に置きます。単体の `suiko` CL
 
 ### 6.6 oboro から解析を呼ぶ境界
 
-oboro は `oboro-ja` を同じ実行ファイルに組み込み、Rust の関数として解析を呼びます。単体 CLI も同じ解析を使います。CLI の引数、終了コード、標準出力は CLI 側で扱います。
+`oboro-ja` は jaio の JSON 出力とスキーマ (§7.3) を公開しています。この節では入口に追加する解析 API を定めます。jaio の診断を呼ぶ API は [Issue #21](https://github.com/oboro-app/oboro-ja/issues/21) で扱います。
+
+oboro は `oboro-ja` を同じ実行ファイルに組み込み、Rust の関数として解析を呼ぶ構成にします。単体 CLI も同じ解析を使います。CLI の引数、終了コード、標準出力は CLI 側で扱います。
 
 | 呼び出し | 入力 | 結果 |
 |---|---|---|
@@ -307,17 +309,17 @@ oboro は `oboro-ja` を同じ実行ファイルに組み込み、Rust の関数
 | suiko の check | 推敲前後の本文、検査項目、対象リポジトリ外の一時ディレクトリ | 項目ごとの検査結果と一時ディレクトリ内の記録 |
 | suiko の diff | 推敲前後の本文 | 意味や事実の変化を確認するための差分 |
 
-組み込み先は設定と、呼び出し前に解決したパスを渡します。辞書の形式は §6.5 に従います。解析は渡された設定とパスを使い、失敗は戻り値で返します。
+呼び出し側 (oboro など) は設定と、呼び出し前に解決したパスを渡します。辞書の形式は §6.5 に従います。解析は渡された設定とパスを使い、失敗は戻り値で返します。
 
-入口の解析 API は入力の上限と中断の印を受け取ります([Issue #13](https://github.com/oboro-app/oboro-ja/issues/13))。ファイルは開いた後、本文を読む前に大きさを確認し、読み込み中も上限を守ります。渡された本文は解析前に大きさを確認します。上限を超えた入力はエラーにします。
+呼び出し側は、入力の上限と cancellation token (中断を伝える値) を渡します ([Issue #13](https://github.com/oboro-app/oboro-ja/issues/13))。解析 API はファイルを開いた後、本文を読む前に大きさを確認し、読み込み中も上限を守ります。渡された本文は解析前に大きさを確認します。上限を超えた入力はエラーにします。
 
-解析中はファイルや規則の区切りで中断を確認します。`fancy-regex` の後戻りにも上限を設けます。途中まで返した診断は未完了として扱います。jaio の JSON では `summary.analysis_complete` が `false` になります。
+解析中はファイルや規則の区切りで中断を確認します。`fancy-regex` の後戻りにも上限を設けます。jaio が途中までの診断を返すときは、JSON の `summary.analysis_complete` を `false` にします。suiko は中断をエラーとして返します。
 
 組み込みの検証では、公開 tag を固定した oboro から実際に jaio と suiko を呼びます。同じ入力と設定の単体 CLI と結果を照合します。正常な入力に加え、入力の上限超過、中断、辞書を開けない場合も確認します。
 
 ### 6.7 suiko の移植と出力の照合
 
-yomiyasu の lint、check、diff を Rust へ移し、Python がない環境で動くことを確かめます。移植元の commit を 1 か所に記録します。各 module の冒頭に移植元のファイルと版を記します。上流の更新は [Issue #7](https://github.com/oboro-app/oboro-ja/issues/7) の仕組みで追います。
+推敲ツール [yomiyasu](https://github.com/nanaism/yomiyasu) の lint、check、diff を suiko に移します。移植した処理が Python のない環境で動くことを確かめます。移植元の commit を 1 か所に記録し、各 module の冒頭に移植元のファイルと版を記します。yomiyasu の更新は [Issue #7](https://github.com/oboro-app/oboro-ja/issues/7) の仕組みで追います。
 
 | 順 | 移植する処理 | 照合する振る舞い |
 |---|---|---|
@@ -327,7 +329,7 @@ yomiyasu の lint、check、diff を Rust へ移し、Python がない環境で�
 
 規則の対応は [Issue #2](https://github.com/oboro-app/oboro-ja/issues/2) で照合します。リポジトリ全体を参照する規則は jaio、推敲の手順に属する規則は suiko が持ちます。重なる規則には §6.4 に従って持ち主を 1 つ割り当てます。`markdown_visibility.py` に対応する処理は共通の土台に置き、suiko の各規則が共有します。
 
-上流の試験の入力と期待値を使い、各段階の出力を照合します。差が出る項目は理由と一緒に記録します。規則と語の一覧は上流の references から読みます。推敲の手順にある実行コマンドを suiko に置き換え、取り込んだファイルには出典と該当する MIT または Unicode のライセンス表記を添えます。
+yomiyasu の試験の入力と期待値を使い、各段階の出力を照合します。差が出る項目は理由と一緒に記録します。suiko は規則と語の一覧を yomiyasu の references から読みます。取り込んだ推敲手順にある実行コマンドを suiko のコマンドに書き換えます。取り込んだファイルには出典と該当する MIT または Unicode のライセンス表記を添えます。
 
 ## 7. 出力仕様
 

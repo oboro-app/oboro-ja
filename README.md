@@ -259,7 +259,7 @@ fn main() {
 | 項目 | 内容 |
 |---|---|
 | 版の固定 | `tag` で固定します。`Cargo.lock` が commit を記録します。版の付け方と追随の手順は [docs/release.md](docs/release.md) を参照してください |
-| 辞書 | 既定では埋め込みません(`default-features = false` で軽いビルド)。解析を呼ぶ API と辞書の指定は [設計書](docs/design.md#66-oboro-から解析を呼ぶ境界) を参照してください |
+| 辞書 | 既定では埋め込みません(`default-features = false` で軽いビルド)。今後追加する解析 API と辞書の指定は [設計書](docs/design.md#66-oboro-から解析を呼ぶ境界) を参照してください |
 | 辞書の埋め込み | `features = ["embedded-dict"]` を付けます(バイナリが約 600MB になります) |
 | 非公開の fork やミラー | cargo 組み込みの git 取得が認証に失敗するときは、`CARGO_NET_GIT_FETCH_WITH_CLI=true`(または `.cargo/config.toml` の `[net] git-fetch-with-cli = true`)を設定し、手元の git コマンドの認証を使います |
 
