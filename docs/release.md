@@ -82,8 +82,7 @@ git push origin v<version>
 ### バージョニング
 
 版は workspace 全体で 1 つです(`Cargo.toml` の `workspace.package.version`)。
-`oboro-ja-core`・`oboro-jaio`・`jaio-cli` を同じ版で出し、git の tag `v<version>` が
-その版の全 crate を指します。
+workspace の全 crate を同じ版で出します。git の tag `v<version>` がその版を指します。
 
 | 変更の種類 | 0.x の間 | 1.0 以降 | 例 |
 |---|---|---|---|
@@ -101,18 +100,18 @@ git push origin v<version>
 
 ### crate を取り込む側の追随
 
-ほかのリポジトリが `oboro-ja-core`・`oboro-jaio` を取り込むときは、tag を固定した
-git の依存にします(書き方は [README](../README.md) の「crate として取り込む」)。
+ほかのリポジトリから依存に入れる crate は `oboro-ja` です。
+tag の指定は [README](../README.md#crate-として取り込む) を参照してください。
 `Cargo.lock` が tag の指す commit を記録するため、追随は取り込む側が版を上げたときだけ
 起こります。
 
 | 順 | 取り込む側の作業 |
 |---|---|
 | 1 | [GitHub Releases](https://github.com/oboro-app/oboro-ja/releases) で新しい tag と、互換のない変更の有無を確かめる |
-| 2 | `Cargo.toml` の `tag = "v<version>"` を新しい版へ書き換える(取り込む crate はすべて同じ tag に揃える) |
-| 3 | `cargo update -p oboro-ja-core -p oboro-jaio` で `Cargo.lock` の commit を更新する |
+| 2 | `Cargo.toml` の `tag = "v<version>"` を更新先に書き換える |
+| 3 | `cargo update -p oboro-ja` で `Cargo.lock` の commit を更新する |
 | 4 | 取り込む側の検査を通す。互換のない変更を含む版では、リリースノートの移行の方法に従って直す |
-| 5 | 辞書を取り直すときは、同じリリースの `jaio-dict-*.tar.gz` と `.sha256` を使い、`oboro_ja_core::dict::install_archive` で照合して置く |
+| 5 | 辞書を更新するときは、同じリリースの `jaio-dict-*.tar.gz` と `.sha256` を使って照合する |
 
 ## リリーススクリプト
 
